@@ -197,6 +197,56 @@
       color: #0ff4;
       font-family: 'Roboto Mono', monospace;
     }
+
+    .quad-zoom {
+      position: absolute;
+      bottom: 6px;
+      left: 8px;
+      font-size: 0.6rem;
+      color: #0ff6;
+      font-family: 'Roboto Mono', monospace;
+      background: rgba(0,0,0,0.5);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .quad-coords {
+      position: absolute;
+      bottom: 6px;
+      right: 8px;
+      font-size: 0.55rem;
+      color: #0ff4;
+      font-family: 'Roboto Mono', monospace;
+      background: rgba(0,0,0,0.5);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .quadrant.focused {
+      border-color: #0ff;
+      box-shadow: 0 0 25px #0ff6;
+    }
+
+    .zoom-toast {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,255,255,0.9);
+      color: #000;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 9999;
+    }
+
+    .zoom-toast.show {
+      opacity: 1;
+    }
   </style>
 </head>
 <body>
@@ -219,6 +269,8 @@
         <webview src="https://www.google.com"></webview>
       </div>
       <span class="quad-number">#1</span>
+      <span class="quad-zoom">100%</span>
+      <span class="quad-coords"></span>
     </div>
 
     <div class="quadrant" data-quadrant="2">
@@ -230,6 +282,8 @@
         <webview src="https://github.com"></webview>
       </div>
       <span class="quad-number">#2</span>
+      <span class="quad-zoom">100%</span>
+      <span class="quad-coords"></span>
     </div>
 
     <div class="quadrant" data-quadrant="3">
@@ -241,6 +295,8 @@
         <webview src="https://www.youtube.com"></webview>
       </div>
       <span class="quad-number">#3</span>
+      <span class="quad-zoom">100%</span>
+      <span class="quad-coords"></span>
     </div>
 
     <div class="quadrant" data-quadrant="4">
@@ -252,12 +308,43 @@
         <webview src="https://www.wikipedia.org"></webview>
       </div>
       <span class="quad-number">#4</span>
+      <span class="quad-zoom">100%</span>
+      <span class="quad-coords"></span>
     </div>
   </div>
+
+  <div class="zoom-toast" id="zoomToast"></div>
 
   <script>
     const gridContainer = document.getElementById('grid-container');
     const layoutBtns = document.querySelectorAll('.layout-btn');
+    const zoomToast = document.getElementById('zoomToast');
+
+    // 各パネルのズームレベル
+    const zoomLevels = { 1: 1, 2: 1, 3: 1, 4: 1 };
+    let focusedQuadrant = null;
+
+    // ズームトースト表示
+    function showZoomToast(level) {
+      zoomToast.textContent = Math.round(level * 100) + '%';
+      zoomToast.classList.add('show');
+      setTimeout(() => zoomToast.classList.remove('show'), 500);
+    }
+
+    // 座標更新（AHK用）
+    function updateCoords() {
+      document.querySelectorAll('.quadrant').forEach(quad => {
+        const rect = quad.getBoundingClientRect();
+        const coordsEl = quad.querySelector('.quad-coords');
+        // パネル中央の座標（スクリーン座標に近似）
+        const cx = Math.round(rect.left + rect.width / 2);
+        const cy = Math.round(rect.top + rect.height / 2);
+        // 右下座標
+        const rx = Math.round(rect.right);
+        const ry = Math.round(rect.bottom);
+        coordsEl.textContent = `中央(${cx},${cy}) 右下(${rx},${ry})`;
+      });
+    }
 
     // レイアウト切り替え
     layoutBtns.forEach(btn => {
@@ -270,6 +357,8 @@
         if (layout !== '4') {
           gridContainer.classList.add('layout-' + layout);
         }
+        // レイアウト変更後に座標更新
+        setTimeout(updateCoords, 100);
       });
     });
 
@@ -278,6 +367,8 @@
       const input = quad.querySelector('.quad-url');
       const goBtn = quad.querySelector('.quad-go');
       const webview = quad.querySelector('webview');
+      const zoomEl = quad.querySelector('.quad-zoom');
+      const quadId = parseInt(quad.dataset.quadrant);
 
       const navigate = () => {
         let url = input.value.trim();
@@ -303,7 +394,36 @@
       webview.addEventListener('did-navigate', (e) => {
         input.value = e.url;
       });
+
+      // フォーカス管理
+      quad.addEventListener('click', () => {
+        document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('focused'));
+        quad.classList.add('focused');
+        focusedQuadrant = quadId;
+      });
+
+      quad.addEventListener('mouseenter', () => {
+        focusedQuadrant = quadId;
+      });
+
+      // Ctrl+ホイールでズーム
+      quad.addEventListener('wheel', (e) => {
+        if (e.ctrlKey) {
+          e.preventDefault();
+          const delta = e.deltaY > 0 ? -0.1 : 0.1;
+          zoomLevels[quadId] = Math.max(0.25, Math.min(3, zoomLevels[quadId] + delta));
+          webview.setZoomFactor(zoomLevels[quadId]);
+          zoomEl.textContent = Math.round(zoomLevels[quadId] * 100) + '%';
+          showZoomToast(zoomLevels[quadId]);
+        }
+      }, { passive: false });
     });
+
+    // 初期座標表示
+    window.addEventListener('load', () => {
+      setTimeout(updateCoords, 500);
+    });
+    window.addEventListener('resize', updateCoords);
   </script>
 </body>
 </html>
