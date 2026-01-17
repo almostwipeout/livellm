@@ -536,18 +536,26 @@
       setTimeout(() => zoomToast.classList.remove('show'), 500);
     }
 
-    // 座標更新（AHK用）
+    // 座標更新（AHK用 - スクリーン絶対座標）
     function updateCoords() {
+      // Electronウィンドウのスクリーン位置を取得
+      const screenX = window.screenX || 0;
+      const screenY = window.screenY || 0;
+
       document.querySelectorAll('.quadrant').forEach(quad => {
         const rect = quad.getBoundingClientRect();
         const coordsEl = quad.querySelector('.quad-coords');
-        const cx = Math.round(rect.left + rect.width / 2);
-        const cy = Math.round(rect.top + rect.height / 2);
-        const rx = Math.round(rect.right);
-        const ry = Math.round(rect.bottom);
+        // スクリーン絶対座標に変換
+        const cx = Math.round(screenX + rect.left + rect.width / 2);
+        const cy = Math.round(screenY + rect.top + rect.height / 2);
+        const rx = Math.round(screenX + rect.right);
+        const ry = Math.round(screenY + rect.bottom);
         coordsEl.textContent = `中央(${cx},${cy}) 右下(${rx},${ry})`;
       });
     }
+
+    // 定期的に座標更新（ウィンドウ移動対応）
+    setInterval(updateCoords, 500);
 
     // 設定モーダル
     settingsBtn.addEventListener('click', () => {
