@@ -3,182 +3,163 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'">
-  <title>Mini Browser</title>
+  <title>Quad Browser</title>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@300;400&display=swap');
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    body, html {
+      height: 100%;
+      overflow: hidden;
+      background: #0a0a12;
+      color: #0ff;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    header {
+      height: 44px;
+      background: rgba(0,20,40,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #0ff3;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+    }
+
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #0ff;
+      text-shadow: 0 0 10px #0ff8;
+      letter-spacing: 2px;
+    }
+
+    .layout-toggle {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+    }
+
+    .layout-btn {
+      background: #001122;
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+      transition: all 0.3s;
+    }
+
+    .layout-btn:hover, .layout-btn.active {
+      background: #0ff;
+      color: #000;
+      box-shadow: 0 0 12px #0ff8;
+    }
+
+    #grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      height: calc(100vh - 44px);
+      gap: 2px;
+      padding: 2px;
+      background: #000;
+    }
+
+    #grid-container.layout-2 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+    }
+
+    #grid-container.layout-2 .quadrant:nth-child(3),
+    #grid-container.layout-2 .quadrant:nth-child(4) {
+      display: none;
+    }
+
+    #grid-container.layout-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+
+    #grid-container.layout-1 .quadrant:nth-child(2),
+    #grid-container.layout-1 .quadrant:nth-child(3),
+    #grid-container.layout-1 .quadrant:nth-child(4) {
+      display: none;
+    }
+
+    .quadrant {
+      position: relative;
+      background: #0a1020;
+      border: 1px solid #0ff2;
+      border-radius: 4px;
+      overflow: hidden;
       display: flex;
       flex-direction: column;
-      height: 100vh;
-      background: #1a1a2e;
-      color: #eee;
     }
 
-    .toolbar {
+    .quadrant:focus-within {
+      border-color: #0ff;
+      box-shadow: 0 0 20px #0ff4;
+    }
+
+    .quad-nav {
+      height: 38px;
+      background: rgba(0,10,20,0.95);
       display: flex;
-      align-items: center;
-      padding: 8px 12px;
-      background: #16213e;
-      border-bottom: 1px solid #0f3460;
-      gap: 8px;
+      padding: 4px 8px;
+      gap: 6px;
+      border-bottom: 1px solid #0ff2;
     }
 
-    .nav-buttons {
-      display: flex;
-      gap: 4px;
-    }
-
-    .nav-btn {
-      width: 32px;
-      height: 32px;
-      border: none;
-      border-radius: 6px;
-      background: #0f3460;
-      color: #eee;
-      cursor: pointer;
-      font-size: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background 0.2s;
-    }
-
-    .nav-btn:hover {
-      background: #e94560;
-    }
-
-    .nav-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-
-    .nav-btn:disabled:hover {
-      background: #0f3460;
-    }
-
-    .url-bar {
+    .quad-url {
       flex: 1;
-      display: flex;
-      align-items: center;
-      background: #0f3460;
-      border-radius: 20px;
-      padding: 4px 12px;
-      gap: 8px;
+      background: #001525;
+      border: 1px solid #0ff3;
+      color: #0ff;
+      padding: 0 10px;
+      border-radius: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+      transition: all 0.3s;
     }
 
-    .url-bar input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      color: #eee;
-      font-size: 14px;
+    .quad-url:focus {
       outline: none;
+      box-shadow: 0 0 10px #0ff6;
+      border-color: #0ff;
     }
 
-    .url-bar input::placeholder {
-      color: #888;
+    .quad-url::placeholder {
+      color: #0ff6;
     }
 
-    .go-btn {
-      padding: 6px 16px;
+    .quad-go {
+      background: linear-gradient(135deg, #0ff, #08f);
+      color: #000;
       border: none;
-      border-radius: 16px;
-      background: #e94560;
-      color: white;
+      padding: 0 14px;
+      border-radius: 4px;
+      font-weight: bold;
+      font-size: 0.75rem;
       cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-      transition: background 0.2s;
+      transition: all 0.3s;
+      font-family: 'Orbitron', sans-serif;
     }
 
-    .go-btn:hover {
-      background: #ff6b6b;
+    .quad-go:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 15px #0ff;
     }
 
-    .tabs-bar {
-      display: flex;
-      align-items: center;
-      padding: 4px 12px;
-      background: #16213e;
-      gap: 4px;
-      overflow-x: auto;
-    }
-
-    .tab {
-      display: flex;
-      align-items: center;
-      padding: 6px 12px;
-      background: #0f3460;
-      border-radius: 8px 8px 0 0;
-      cursor: pointer;
-      gap: 8px;
-      min-width: 120px;
-      max-width: 200px;
-      transition: background 0.2s;
-    }
-
-    .tab.active {
-      background: #1a1a2e;
-    }
-
-    .tab:hover:not(.active) {
-      background: #1a3a5c;
-    }
-
-    .tab-title {
-      flex: 1;
-      font-size: 12px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .tab-close {
-      width: 16px;
-      height: 16px;
-      border: none;
-      border-radius: 50%;
-      background: transparent;
-      color: #888;
-      cursor: pointer;
-      font-size: 14px;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .tab-close:hover {
-      background: #e94560;
-      color: white;
-    }
-
-    .new-tab-btn {
-      width: 28px;
-      height: 28px;
-      border: none;
-      border-radius: 6px;
-      background: #0f3460;
-      color: #eee;
-      cursor: pointer;
-      font-size: 18px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .new-tab-btn:hover {
-      background: #e94560;
-    }
-
-    .browser-container {
+    .quad-content {
       flex: 1;
       position: relative;
       background: #fff;
@@ -187,434 +168,142 @@
     webview {
       width: 100%;
       height: 100%;
+      border: none;
+    }
+
+    .quad-placeholder {
       position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    .loading-bar {
-      position: absolute;
-      top: 0;
-      left: 0;
-      height: 3px;
-      background: #e94560;
-      width: 0%;
-      transition: width 0.3s;
-      z-index: 100;
-    }
-
-    .loading-bar.loading {
-      animation: loading 1.5s infinite;
-    }
-
-    @keyframes loading {
-      0% { width: 0%; }
-      50% { width: 70%; }
-      100% { width: 90%; }
-    }
-
-    .start-page {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      inset: 0;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-      color: #eee;
+      background: linear-gradient(135deg, #0a1020 0%, #0a0a18 100%);
+      color: #0ff8;
+      font-size: 0.9rem;
     }
 
-    .start-page h1 {
-      font-size: 48px;
-      margin-bottom: 20px;
-      color: #e94560;
+    .quad-placeholder-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      opacity: 0.5;
     }
 
-    .start-page p {
-      color: #888;
-      margin-bottom: 30px;
-    }
-
-    .quick-links {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      justify-content: center;
-      max-width: 600px;
-    }
-
-    .quick-link {
-      padding: 12px 24px;
-      background: #0f3460;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: center;
-    }
-
-    .quick-link:hover {
-      background: #e94560;
-      transform: translateY(-2px);
-    }
-
-    .status-bar {
-      padding: 4px 12px;
-      background: #16213e;
-      font-size: 12px;
-      color: #888;
-      border-top: 1px solid #0f3460;
+    .quad-number {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 0.65rem;
+      color: #0ff4;
+      font-family: 'Roboto Mono', monospace;
     }
   </style>
 </head>
 <body>
-  <div class="toolbar">
-    <div class="nav-buttons">
-      <button class="nav-btn" id="backBtn" title="Back">&#8592;</button>
-      <button class="nav-btn" id="forwardBtn" title="Forward">&#8594;</button>
-      <button class="nav-btn" id="reloadBtn" title="Reload">&#8635;</button>
-      <button class="nav-btn" id="homeBtn" title="Home">&#8962;</button>
+  <header>
+    <span class="header-title">QUAD BROWSER</span>
+    <div class="layout-toggle">
+      <button class="layout-btn" data-layout="1">1</button>
+      <button class="layout-btn" data-layout="2">2</button>
+      <button class="layout-btn active" data-layout="4">4</button>
     </div>
-    <div class="url-bar">
-      <input type="text" id="urlInput" placeholder="URLを入力するか検索..." autocomplete="off">
-      <button class="go-btn" id="goBtn">Go</button>
-    </div>
-  </div>
+  </header>
 
-  <div class="tabs-bar">
-    <div class="tab active" data-tab-id="0">
-      <span class="tab-title">New Tab</span>
-      <button class="tab-close">&times;</button>
-    </div>
-    <button class="new-tab-btn" id="newTabBtn">+</button>
-  </div>
-
-  <div class="browser-container" id="browserContainer">
-    <div class="loading-bar" id="loadingBar"></div>
-    <div class="start-page" id="startPage">
-      <h1>Mini Browser</h1>
-      <p>Electron製の簡易ブラウザへようこそ</p>
-      <div class="quick-links">
-        <div class="quick-link" data-url="https://www.google.com">Google</div>
-        <div class="quick-link" data-url="https://www.github.com">GitHub</div>
-        <div class="quick-link" data-url="https://www.youtube.com">YouTube</div>
-        <div class="quick-link" data-url="https://www.wikipedia.org">Wikipedia</div>
+  <div id="grid-container">
+    <div class="quadrant" data-quadrant="1">
+      <div class="quad-nav">
+        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://www.google.com">
+        <button class="quad-go">GO</button>
       </div>
+      <div class="quad-content">
+        <webview src="https://www.google.com"></webview>
+      </div>
+      <span class="quad-number">#1</span>
+    </div>
+
+    <div class="quadrant" data-quadrant="2">
+      <div class="quad-nav">
+        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://github.com">
+        <button class="quad-go">GO</button>
+      </div>
+      <div class="quad-content">
+        <webview src="https://github.com"></webview>
+      </div>
+      <span class="quad-number">#2</span>
+    </div>
+
+    <div class="quadrant" data-quadrant="3">
+      <div class="quad-nav">
+        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://www.youtube.com">
+        <button class="quad-go">GO</button>
+      </div>
+      <div class="quad-content">
+        <webview src="https://www.youtube.com"></webview>
+      </div>
+      <span class="quad-number">#3</span>
+    </div>
+
+    <div class="quadrant" data-quadrant="4">
+      <div class="quad-nav">
+        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://www.wikipedia.org">
+        <button class="quad-go">GO</button>
+      </div>
+      <div class="quad-content">
+        <webview src="https://www.wikipedia.org"></webview>
+      </div>
+      <span class="quad-number">#4</span>
     </div>
   </div>
-
-  <div class="status-bar" id="statusBar">Ready</div>
 
   <script>
-    // State
-    let tabs = [{ id: 0, url: '', title: 'New Tab', webview: null }];
-    let activeTabId = 0;
-    let tabCounter = 1;
+    const gridContainer = document.getElementById('grid-container');
+    const layoutBtns = document.querySelectorAll('.layout-btn');
 
-    // Elements
-    const urlInput = document.getElementById('urlInput');
-    const goBtn = document.getElementById('goBtn');
-    const backBtn = document.getElementById('backBtn');
-    const forwardBtn = document.getElementById('forwardBtn');
-    const reloadBtn = document.getElementById('reloadBtn');
-    const homeBtn = document.getElementById('homeBtn');
-    const newTabBtn = document.getElementById('newTabBtn');
-    const browserContainer = document.getElementById('browserContainer');
-    const loadingBar = document.getElementById('loadingBar');
-    const startPage = document.getElementById('startPage');
-    const statusBar = document.getElementById('statusBar');
-    const tabsBar = document.querySelector('.tabs-bar');
+    // レイアウト切り替え
+    layoutBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        layoutBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
 
-    // Helper to ensure URL has protocol
-    function formatUrl(url) {
-      url = url.trim();
-      if (!url) return '';
-
-      // Check if it's a search query
-      if (!url.includes('.') || url.includes(' ')) {
-        return 'https://www.google.com/search?q=' + encodeURIComponent(url);
-      }
-
-      // Add protocol if missing
-      if (!url.startsWith('http://') && !url.startsWith('https://')) {
-        return 'https://' + url;
-      }
-      return url;
-    }
-
-    // Create webview for a tab
-    function createWebview(tabId) {
-      const webview = document.createElement('webview');
-      webview.setAttribute('allowpopups', '');
-      webview.setAttribute('partition', 'persist:browser');
-      webview.style.display = 'none';
-      webview.id = 'webview-' + tabId;
-
-      // Event listeners
-      webview.addEventListener('did-start-loading', () => {
-        if (getActiveTab().id === tabId) {
-          loadingBar.classList.add('loading');
-          statusBar.textContent = 'Loading...';
+        const layout = btn.dataset.layout;
+        gridContainer.className = '';
+        if (layout !== '4') {
+          gridContainer.classList.add('layout-' + layout);
         }
       });
+    });
 
-      webview.addEventListener('did-stop-loading', () => {
-        if (getActiveTab().id === tabId) {
-          loadingBar.classList.remove('loading');
-          loadingBar.style.width = '100%';
-          setTimeout(() => { loadingBar.style.width = '0%'; }, 200);
-          statusBar.textContent = 'Done';
-          updateNavButtons();
+    // 各パネルのナビゲーション
+    document.querySelectorAll('.quadrant').forEach(quad => {
+      const input = quad.querySelector('.quad-url');
+      const goBtn = quad.querySelector('.quad-go');
+      const webview = quad.querySelector('webview');
+
+      const navigate = () => {
+        let url = input.value.trim();
+        if (!url) return;
+
+        // 検索クエリか判定
+        if (!url.includes('.') || url.includes(' ')) {
+          url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+        } else if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
         }
-      });
 
-      webview.addEventListener('did-navigate', (e) => {
-        const tab = tabs.find(t => t.id === tabId);
-        if (tab) {
-          tab.url = e.url;
-          if (getActiveTab().id === tabId) {
-            urlInput.value = e.url;
-          }
-        }
-        updateNavButtons();
-      });
-
-      webview.addEventListener('did-navigate-in-page', (e) => {
-        const tab = tabs.find(t => t.id === tabId);
-        if (tab && e.isMainFrame) {
-          tab.url = e.url;
-          if (getActiveTab().id === tabId) {
-            urlInput.value = e.url;
-          }
-        }
-      });
-
-      webview.addEventListener('page-title-updated', (e) => {
-        const tab = tabs.find(t => t.id === tabId);
-        if (tab) {
-          tab.title = e.title || 'Untitled';
-          updateTabTitle(tabId, tab.title);
-        }
-      });
-
-      webview.addEventListener('did-fail-load', (e) => {
-        if (e.errorCode !== -3) { // Ignore aborted loads
-          statusBar.textContent = 'Error: ' + e.errorDescription;
-        }
-      });
-
-      browserContainer.appendChild(webview);
-      return webview;
-    }
-
-    // Get active tab
-    function getActiveTab() {
-      return tabs.find(t => t.id === activeTabId);
-    }
-
-    // Update tab title in UI
-    function updateTabTitle(tabId, title) {
-      const tabEl = document.querySelector(`.tab[data-tab-id="${tabId}"] .tab-title`);
-      if (tabEl) {
-        tabEl.textContent = title;
-      }
-    }
-
-    // Update navigation buttons state
-    function updateNavButtons() {
-      const tab = getActiveTab();
-      if (tab && tab.webview) {
-        backBtn.disabled = !tab.webview.canGoBack();
-        forwardBtn.disabled = !tab.webview.canGoForward();
-      } else {
-        backBtn.disabled = true;
-        forwardBtn.disabled = true;
-      }
-    }
-
-    // Navigate to URL
-    function navigateTo(url) {
-      const formattedUrl = formatUrl(url);
-      if (!formattedUrl) return;
-
-      let tab = getActiveTab();
-
-      // Hide start page
-      startPage.style.display = 'none';
-
-      // Create webview if needed
-      if (!tab.webview) {
-        tab.webview = createWebview(tab.id);
-      }
-
-      // Show this webview, hide others
-      tabs.forEach(t => {
-        if (t.webview) {
-          t.webview.style.display = t.id === activeTabId ? 'flex' : 'none';
-        }
-      });
-
-      // Navigate
-      tab.url = formattedUrl;
-      tab.webview.src = formattedUrl;
-      urlInput.value = formattedUrl;
-    }
-
-    // Switch to tab
-    function switchToTab(tabId) {
-      activeTabId = tabId;
-
-      // Update tab UI
-      document.querySelectorAll('.tab').forEach(t => {
-        t.classList.toggle('active', parseInt(t.dataset.tabId) === tabId);
-      });
-
-      const tab = getActiveTab();
-
-      // Update URL bar
-      urlInput.value = tab.url || '';
-
-      // Show/hide webviews
-      tabs.forEach(t => {
-        if (t.webview) {
-          t.webview.style.display = t.id === activeTabId ? 'flex' : 'none';
-        }
-      });
-
-      // Show start page if no webview
-      startPage.style.display = tab.webview ? 'none' : 'flex';
-
-      updateNavButtons();
-    }
-
-    // Create new tab
-    function createNewTab() {
-      const newTab = {
-        id: tabCounter++,
-        url: '',
-        title: 'New Tab',
-        webview: null
+        webview.src = url;
+        input.value = url;
       };
-      tabs.push(newTab);
 
-      // Create tab element
-      const tabEl = document.createElement('div');
-      tabEl.className = 'tab';
-      tabEl.dataset.tabId = newTab.id;
-      tabEl.innerHTML = `
-        <span class="tab-title">New Tab</span>
-        <button class="tab-close">&times;</button>
-      `;
-      tabsBar.insertBefore(tabEl, newTabBtn);
+      goBtn.addEventListener('click', navigate);
+      input.addEventListener('keypress', e => {
+        if (e.key === 'Enter') navigate();
+      });
 
-      // Switch to new tab
-      switchToTab(newTab.id);
-    }
-
-    // Close tab
-    function closeTab(tabId) {
-      if (tabs.length === 1) {
-        // Don't close last tab, just reset it
-        const tab = tabs[0];
-        if (tab.webview) {
-          tab.webview.remove();
-          tab.webview = null;
-        }
-        tab.url = '';
-        tab.title = 'New Tab';
-        updateTabTitle(tab.id, 'New Tab');
-        urlInput.value = '';
-        startPage.style.display = 'flex';
-        updateNavButtons();
-        return;
-      }
-
-      const tabIndex = tabs.findIndex(t => t.id === tabId);
-      const tab = tabs[tabIndex];
-
-      // Remove webview
-      if (tab.webview) {
-        tab.webview.remove();
-      }
-
-      // Remove from array
-      tabs.splice(tabIndex, 1);
-
-      // Remove tab element
-      document.querySelector(`.tab[data-tab-id="${tabId}"]`).remove();
-
-      // Switch to another tab if this was active
-      if (activeTabId === tabId) {
-        const newActiveIndex = Math.min(tabIndex, tabs.length - 1);
-        switchToTab(tabs[newActiveIndex].id);
-      }
-    }
-
-    // Event listeners
-    goBtn.addEventListener('click', () => navigateTo(urlInput.value));
-
-    urlInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') navigateTo(urlInput.value);
-    });
-
-    backBtn.addEventListener('click', () => {
-      const tab = getActiveTab();
-      if (tab && tab.webview && tab.webview.canGoBack()) {
-        tab.webview.goBack();
-      }
-    });
-
-    forwardBtn.addEventListener('click', () => {
-      const tab = getActiveTab();
-      if (tab && tab.webview && tab.webview.canGoForward()) {
-        tab.webview.goForward();
-      }
-    });
-
-    reloadBtn.addEventListener('click', () => {
-      const tab = getActiveTab();
-      if (tab && tab.webview) {
-        tab.webview.reload();
-      }
-    });
-
-    homeBtn.addEventListener('click', () => {
-      const tab = getActiveTab();
-      if (tab && tab.webview) {
-        tab.webview.style.display = 'none';
-      }
-      startPage.style.display = 'flex';
-      urlInput.value = '';
-      tab.url = '';
-      tab.title = 'New Tab';
-      updateTabTitle(tab.id, 'New Tab');
-    });
-
-    newTabBtn.addEventListener('click', createNewTab);
-
-    // Tab click handlers (delegated)
-    tabsBar.addEventListener('click', (e) => {
-      const tab = e.target.closest('.tab');
-      if (!tab) return;
-
-      if (e.target.classList.contains('tab-close')) {
-        closeTab(parseInt(tab.dataset.tabId));
-      } else {
-        switchToTab(parseInt(tab.dataset.tabId));
-      }
-    });
-
-    // Quick links
-    document.querySelectorAll('.quick-link').forEach(link => {
-      link.addEventListener('click', () => {
-        navigateTo(link.dataset.url);
+      // URL更新を反映
+      webview.addEventListener('did-navigate', (e) => {
+        input.value = e.url;
       });
     });
-
-    // Initialize
-    updateNavButtons();
   </script>
 </body>
 </html>
