@@ -247,6 +247,122 @@
     .zoom-toast.show {
       opacity: 1;
     }
+
+    .settings-btn {
+      background: #001122;
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+      transition: all 0.3s;
+      margin-left: 12px;
+    }
+
+    .settings-btn:hover {
+      background: #0ff;
+      color: #000;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: #0a1525;
+      border: 1px solid #0ff;
+      border-radius: 12px;
+      padding: 24px;
+      width: 500px;
+      max-width: 90vw;
+      box-shadow: 0 0 40px #0ff4;
+    }
+
+    .modal h2 {
+      color: #0ff;
+      margin-bottom: 20px;
+      font-size: 1.2rem;
+      text-shadow: 0 0 10px #0ff8;
+    }
+
+    .modal-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 12px;
+    }
+
+    .modal-row label {
+      width: 30px;
+      color: #0ff8;
+      font-size: 0.85rem;
+    }
+
+    .modal-row input {
+      flex: 1;
+      background: #001525;
+      border: 1px solid #0ff3;
+      color: #0ff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.85rem;
+    }
+
+    .modal-row input:focus {
+      outline: none;
+      border-color: #0ff;
+      box-shadow: 0 0 10px #0ff6;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      justify-content: flex-end;
+    }
+
+    .modal-btn {
+      padding: 8px 20px;
+      border-radius: 4px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .modal-btn.save {
+      background: linear-gradient(135deg, #0ff, #08f);
+      color: #000;
+      border: none;
+      font-weight: bold;
+    }
+
+    .modal-btn.save:hover {
+      box-shadow: 0 0 15px #0ff;
+    }
+
+    .modal-btn.cancel {
+      background: transparent;
+      border: 1px solid #0ff4;
+      color: #0ff;
+    }
+
+    .modal-btn.cancel:hover {
+      background: #0ff2;
+    }
   </style>
 </head>
 <body>
@@ -257,57 +373,58 @@
       <button class="layout-btn" data-layout="2">2</button>
       <button class="layout-btn active" data-layout="4">4</button>
     </div>
+    <button class="settings-btn" id="settingsBtn">SETTINGS</button>
   </header>
 
   <div id="grid-container">
     <div class="quadrant" data-quadrant="1">
       <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://www.google.com">
+        <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
       </div>
       <div class="quad-content">
-        <webview src="https://www.google.com"></webview>
+        <webview></webview>
       </div>
-      <span class="quad-number">#1</span>
+      <span class="quad-number">#1 GPT</span>
       <span class="quad-zoom">100%</span>
       <span class="quad-coords"></span>
     </div>
 
     <div class="quadrant" data-quadrant="2">
       <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://github.com">
+        <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
       </div>
       <div class="quad-content">
-        <webview src="https://github.com"></webview>
+        <webview></webview>
       </div>
-      <span class="quad-number">#2</span>
+      <span class="quad-number">#2 Gemini</span>
       <span class="quad-zoom">100%</span>
       <span class="quad-coords"></span>
     </div>
 
     <div class="quadrant" data-quadrant="3">
       <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://www.youtube.com">
+        <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
       </div>
       <div class="quad-content">
-        <webview src="https://www.youtube.com"></webview>
+        <webview></webview>
       </div>
-      <span class="quad-number">#3</span>
+      <span class="quad-number">#3 Claude</span>
       <span class="quad-zoom">100%</span>
       <span class="quad-coords"></span>
     </div>
 
     <div class="quadrant" data-quadrant="4">
       <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力..." value="https://www.wikipedia.org">
+        <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
       </div>
       <div class="quad-content">
-        <webview src="https://www.wikipedia.org"></webview>
+        <webview></webview>
       </div>
-      <span class="quad-number">#4</span>
+      <span class="quad-number">#4 Grok</span>
       <span class="quad-zoom">100%</span>
       <span class="quad-coords"></span>
     </div>
@@ -315,10 +432,55 @@
 
   <div class="zoom-toast" id="zoomToast"></div>
 
+  <!-- 設定モーダル -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+      <h2>初期URL設定</h2>
+      <div class="modal-row">
+        <label>#1</label>
+        <input type="text" id="url1" placeholder="https://...">
+      </div>
+      <div class="modal-row">
+        <label>#2</label>
+        <input type="text" id="url2" placeholder="https://...">
+      </div>
+      <div class="modal-row">
+        <label>#3</label>
+        <input type="text" id="url3" placeholder="https://...">
+      </div>
+      <div class="modal-row">
+        <label>#4</label>
+        <input type="text" id="url4" placeholder="https://...">
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn cancel" id="cancelBtn">CANCEL</button>
+        <button class="modal-btn save" id="saveBtn">SAVE & RELOAD</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const gridContainer = document.getElementById('grid-container');
     const layoutBtns = document.querySelectorAll('.layout-btn');
     const zoomToast = document.getElementById('zoomToast');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const saveBtn = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    // デフォルトURL
+    const defaultUrls = {
+      1: 'https://chatgpt.com',
+      2: 'https://gemini.google.com',
+      3: 'https://claude.ai',
+      4: 'https://grok.com'
+    };
+
+    // localStorageから読み込み、なければデフォルト
+    function getUrls() {
+      const saved = localStorage.getItem('quadUrls');
+      return saved ? JSON.parse(saved) : { ...defaultUrls };
+    }
 
     // 各パネルのズームレベル
     const zoomLevels = { 1: 1, 2: 1, 3: 1, 4: 1 };
@@ -336,15 +498,47 @@
       document.querySelectorAll('.quadrant').forEach(quad => {
         const rect = quad.getBoundingClientRect();
         const coordsEl = quad.querySelector('.quad-coords');
-        // パネル中央の座標（スクリーン座標に近似）
         const cx = Math.round(rect.left + rect.width / 2);
         const cy = Math.round(rect.top + rect.height / 2);
-        // 右下座標
         const rx = Math.round(rect.right);
         const ry = Math.round(rect.bottom);
         coordsEl.textContent = `中央(${cx},${cy}) 右下(${rx},${ry})`;
       });
     }
+
+    // 設定モーダル
+    settingsBtn.addEventListener('click', () => {
+      const urls = getUrls();
+      document.getElementById('url1').value = urls[1];
+      document.getElementById('url2').value = urls[2];
+      document.getElementById('url3').value = urls[3];
+      document.getElementById('url4').value = urls[4];
+      modalOverlay.classList.add('show');
+    });
+
+    cancelBtn.addEventListener('click', () => {
+      modalOverlay.classList.remove('show');
+    });
+
+    saveBtn.addEventListener('click', () => {
+      const urls = {
+        1: document.getElementById('url1').value.trim() || defaultUrls[1],
+        2: document.getElementById('url2').value.trim() || defaultUrls[2],
+        3: document.getElementById('url3').value.trim() || defaultUrls[3],
+        4: document.getElementById('url4').value.trim() || defaultUrls[4]
+      };
+      localStorage.setItem('quadUrls', JSON.stringify(urls));
+      modalOverlay.classList.remove('show');
+      // リロードして反映
+      location.reload();
+    });
+
+    // モーダル外クリックで閉じる
+    modalOverlay.addEventListener('click', (e) => {
+      if (e.target === modalOverlay) {
+        modalOverlay.classList.remove('show');
+      }
+    });
 
     // レイアウト切り替え
     layoutBtns.forEach(btn => {
@@ -357,69 +551,74 @@
         if (layout !== '4') {
           gridContainer.classList.add('layout-' + layout);
         }
-        // レイアウト変更後に座標更新
         setTimeout(updateCoords, 100);
       });
     });
 
-    // 各パネルのナビゲーション
-    document.querySelectorAll('.quadrant').forEach(quad => {
-      const input = quad.querySelector('.quad-url');
-      const goBtn = quad.querySelector('.quad-go');
-      const webview = quad.querySelector('webview');
-      const zoomEl = quad.querySelector('.quad-zoom');
-      const quadId = parseInt(quad.dataset.quadrant);
+    // 初期化：URLを読み込んでwebviewに設定
+    function initQuadrants() {
+      const urls = getUrls();
+      document.querySelectorAll('.quadrant').forEach(quad => {
+        const input = quad.querySelector('.quad-url');
+        const goBtn = quad.querySelector('.quad-go');
+        const webview = quad.querySelector('webview');
+        const zoomEl = quad.querySelector('.quad-zoom');
+        const quadId = parseInt(quad.dataset.quadrant);
 
-      const navigate = () => {
-        let url = input.value.trim();
-        if (!url) return;
+        // 初期URL設定
+        const initialUrl = urls[quadId];
+        input.value = initialUrl;
+        webview.src = initialUrl;
 
-        // 検索クエリか判定
-        if (!url.includes('.') || url.includes(' ')) {
-          url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
-        } else if (!/^https?:\/\//i.test(url)) {
-          url = 'https://' + url;
-        }
+        const navigate = () => {
+          let url = input.value.trim();
+          if (!url) return;
 
-        webview.src = url;
-        input.value = url;
-      };
+          if (!url.includes('.') || url.includes(' ')) {
+            url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
+          } else if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
+          }
 
-      goBtn.addEventListener('click', navigate);
-      input.addEventListener('keypress', e => {
-        if (e.key === 'Enter') navigate();
+          webview.src = url;
+          input.value = url;
+        };
+
+        goBtn.addEventListener('click', navigate);
+        input.addEventListener('keypress', e => {
+          if (e.key === 'Enter') navigate();
+        });
+
+        webview.addEventListener('did-navigate', (e) => {
+          input.value = e.url;
+        });
+
+        quad.addEventListener('click', () => {
+          document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('focused'));
+          quad.classList.add('focused');
+          focusedQuadrant = quadId;
+        });
+
+        quad.addEventListener('mouseenter', () => {
+          focusedQuadrant = quadId;
+        });
+
+        quad.addEventListener('wheel', (e) => {
+          if (e.ctrlKey) {
+            e.preventDefault();
+            const delta = e.deltaY > 0 ? -0.1 : 0.1;
+            zoomLevels[quadId] = Math.max(0.25, Math.min(3, zoomLevels[quadId] + delta));
+            webview.setZoomFactor(zoomLevels[quadId]);
+            zoomEl.textContent = Math.round(zoomLevels[quadId] * 100) + '%';
+            showZoomToast(zoomLevels[quadId]);
+          }
+        }, { passive: false });
       });
+    }
 
-      // URL更新を反映
-      webview.addEventListener('did-navigate', (e) => {
-        input.value = e.url;
-      });
+    // 初期化
+    initQuadrants();
 
-      // フォーカス管理
-      quad.addEventListener('click', () => {
-        document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('focused'));
-        quad.classList.add('focused');
-        focusedQuadrant = quadId;
-      });
-
-      quad.addEventListener('mouseenter', () => {
-        focusedQuadrant = quadId;
-      });
-
-      // Ctrl+ホイールでズーム
-      quad.addEventListener('wheel', (e) => {
-        if (e.ctrlKey) {
-          e.preventDefault();
-          const delta = e.deltaY > 0 ? -0.1 : 0.1;
-          zoomLevels[quadId] = Math.max(0.25, Math.min(3, zoomLevels[quadId] + delta));
-          webview.setZoomFactor(zoomLevels[quadId]);
-          zoomEl.textContent = Math.round(zoomLevels[quadId] * 100) + '%';
-          showZoomToast(zoomLevels[quadId]);
-        }
-      }, { passive: false });
-    });
-
-    // 初期座標表示
     window.addEventListener('load', () => {
       setTimeout(updateCoords, 500);
     });
