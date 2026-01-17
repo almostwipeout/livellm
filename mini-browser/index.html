@@ -159,6 +159,32 @@
       box-shadow: 0 0 15px #0ff;
     }
 
+    .zoom-controls {
+      display: flex;
+      gap: 2px;
+    }
+
+    .zoom-btn {
+      width: 26px;
+      height: 26px;
+      background: #001525;
+      border: 1px solid #0ff3;
+      color: #0ff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+
+    .zoom-btn:hover {
+      background: #0ff;
+      color: #000;
+    }
+
     .quad-content {
       flex: 1;
       position: relative;
@@ -381,6 +407,10 @@
       <div class="quad-nav">
         <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
+        <div class="zoom-controls">
+          <button class="zoom-btn zoom-out">-</button>
+          <button class="zoom-btn zoom-in">+</button>
+        </div>
       </div>
       <div class="quad-content">
         <webview></webview>
@@ -394,6 +424,10 @@
       <div class="quad-nav">
         <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
+        <div class="zoom-controls">
+          <button class="zoom-btn zoom-out">-</button>
+          <button class="zoom-btn zoom-in">+</button>
+        </div>
       </div>
       <div class="quad-content">
         <webview></webview>
@@ -407,6 +441,10 @@
       <div class="quad-nav">
         <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
+        <div class="zoom-controls">
+          <button class="zoom-btn zoom-out">-</button>
+          <button class="zoom-btn zoom-in">+</button>
+        </div>
       </div>
       <div class="quad-content">
         <webview></webview>
@@ -420,6 +458,10 @@
       <div class="quad-nav">
         <input type="text" class="quad-url" placeholder="URLを入力...">
         <button class="quad-go">GO</button>
+        <div class="zoom-controls">
+          <button class="zoom-btn zoom-out">-</button>
+          <button class="zoom-btn zoom-in">+</button>
+        </div>
       </div>
       <div class="quad-content">
         <webview></webview>
@@ -603,14 +645,26 @@
           focusedQuadrant = quadId;
         });
 
+        // ズームボタン
+        const zoomInBtn = quad.querySelector('.zoom-in');
+        const zoomOutBtn = quad.querySelector('.zoom-out');
+
+        const applyZoom = (delta) => {
+          zoomLevels[quadId] = Math.max(0.25, Math.min(3, zoomLevels[quadId] + delta));
+          webview.setZoomFactor(zoomLevels[quadId]);
+          zoomEl.textContent = Math.round(zoomLevels[quadId] * 100) + '%';
+          showZoomToast(zoomLevels[quadId]);
+        };
+
+        zoomInBtn.addEventListener('click', () => applyZoom(0.1));
+        zoomOutBtn.addEventListener('click', () => applyZoom(-0.1));
+
+        // Ctrl+ホイール（quadrantのパディング部分用）
         quad.addEventListener('wheel', (e) => {
           if (e.ctrlKey) {
             e.preventDefault();
             const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            zoomLevels[quadId] = Math.max(0.25, Math.min(3, zoomLevels[quadId] + delta));
-            webview.setZoomFactor(zoomLevels[quadId]);
-            zoomEl.textContent = Math.round(zoomLevels[quadId] * 100) + '%';
-            showZoomToast(zoomLevels[quadId]);
+            applyZoom(delta);
           }
         }, { passive: false });
       });
