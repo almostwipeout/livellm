@@ -4,9 +4,19 @@
   "description": "4分割AIブラウザ",
   "main": "main.js",
   "scripts": {
-    "start": "electron ."
+    "start": "electron .",
+    "build": "electron-builder"
   },
   "devDependencies": {
-    "electron": "^28.0.0"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.quadbrowser.app",
+    "productName": "Quad Browser",
+    "win": {
+      "target": "portable",
+      "icon": "favicon.ico"
+    }
   }
 }

@@ -8,6 +8,7 @@ function createWindow() {
     width: 1600,
     height: 1000,
     title: 'Quad Browser',
+    icon: path.join(__dirname, 'favicon.ico'),
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true
