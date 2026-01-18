@@ -1,5 +1,36 @@
 # Quad Browser - Changelog
 
+## [V1.1] - 2026-01-18
+
+### JSONエクスポート機能追加
+
+**新機能:**
+- **EXPORTボタン** - 4つのLLMの回答をJSON形式で一括保存
+- 各webviewから最後の応答テキストを自動抽出
+- デスクトップにタイムスタンプ付きJSONファイルを保存
+
+**出力フォーマット:**
+```json
+{
+  "context": "Quad Browser export",
+  "timestamp": "2026-01-18T...",
+  "items": [
+    { "source": "ChatGPT", "url": "...", "content": "...", "note": "" },
+    { "source": "Gemini", "url": "...", "content": "...", "note": "" },
+    { "source": "Claude", "url": "...", "content": "...", "note": "" },
+    { "source": "Grok", "url": "...", "content": "...", "note": "" }
+  ]
+}
+```
+
+**設計思想（GPT-5 Pro との議論より）:**
+- n8n: 使わない（今は）
+- API: 使わない
+- 自動化: 最小
+- 思考の摩擦が一番小さい構造を選択
+
+---
+
 ## [V1.0] - 2026-01-18
 
 ### Initial Release - 4分割AIブラウザ

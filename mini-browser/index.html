@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quad Browser</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      color: #fff;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(90deg, #0f0f23 0%, #1a1a2e 100%);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid #00d4ff;
+      min-height: 60px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: bold;
+      font-style: italic;
+      background: linear-gradient(90deg, #00d4ff, #00ff88);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-shadow: 0 0 20px rgba(0, 212, 255, 0.5);
+      letter-spacing: 2px;
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .split-btn {
+      width: 50px;
+      height: 40px;
+      background: #2a2a4a;
+      border: 2px solid #00d4ff;
+      color: #00d4ff;
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .split-btn:hover {
+      background: #00d4ff;
+      color: #1a1a2e;
+    }
+
+    .split-btn.active {
+      background: #00d4ff;
+      color: #1a1a2e;
+    }
+
+    .settings-btn {
+      padding: 10px 20px;
+      background: #2a2a4a;
+      border: 2px solid #ff00ff;
+      color: #ff00ff;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .settings-btn:hover {
+      background: #ff00ff;
+      color: #1a1a2e;
+    }
+
+    .export-btn {
+      padding: 10px 20px;
+      background: linear-gradient(90deg, #00ff88, #00d4ff);
+      border: none;
+      color: #1a1a2e;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .export-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+
+    /* Browser Grid */
+    .browser-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 4px;
+      padding: 4px;
+      background: #0a0a1a;
+    }
+
+    .browser-grid.split-1 {
+      grid-template-columns: 1fr;
+      grid-template-rows: 1fr;
+    }
+
+    .browser-grid.split-2 {
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr;
+    }
+
+    .browser-grid.split-1 .browser-pane:not(:first-child) {
+      display: none;
+    }
+
+    .browser-grid.split-2 .browser-pane:nth-child(n+3) {
+      display: none;
+    }
+
+    /* Browser Pane */
+    .browser-pane {
+      display: flex;
+      flex-direction: column;
+      background: #1a1a2e;
+      border: 1px solid #333;
+      position: relative;
+    }
+
+    .url-bar {
+      display: flex;
+      padding: 6px;
+      background: #0f0f23;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .url-input {
+      flex: 1;
+      padding: 8px 12px;
+      background: #1a1a2e;
+      border: 2px solid #00d4ff;
+      color: #00d4ff;
+      font-size: 14px;
+      font-family: monospace;
+    }
+
+    .url-input:focus {
+      outline: none;
+      border-color: #00ff88;
+    }
+
+    .go-btn {
+      padding: 8px 16px;
+      background: linear-gradient(90deg, #00d4ff, #00ff88);
+      border: none;
+      color: #1a1a2e;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .go-btn:hover {
+      transform: scale(1.05);
+    }
+
+    .pane-number {
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      background: rgba(255, 0, 255, 0.8);
+      color: white;
+      padding: 2px 8px;
+      font-size: 12px;
+      font-weight: bold;
+      z-index: 100;
+    }
+
+    .pane-label {
+      position: absolute;
+      top: 50px;
+      left: 10px;
+      background: rgba(0, 212, 255, 0.9);
+      color: #1a1a2e;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: bold;
+      z-index: 100;
+    }
+
+    /* Coordinate display */
+    .coord-display {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      background: rgba(0, 0, 0, 0.7);
+      color: #00d4ff;
+      padding: 3px 8px;
+      font-size: 11px;
+      font-family: monospace;
+      z-index: 100;
+    }
+
+    .webview-container {
+      flex: 1;
+      position: relative;
+    }
+
+    webview {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Settings Panel */
+    .settings-panel {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.9);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .settings-panel.active {
+      display: flex;
+    }
+
+    .settings-content {
+      background: #1a1a2e;
+      border: 2px solid #ff00ff;
+      padding: 30px;
+      min-width: 400px;
+    }
+
+    .settings-content h2 {
+      color: #ff00ff;
+      margin-bottom: 20px;
+    }
+
+    .settings-content label {
+      display: block;
+      margin: 10px 0 5px;
+      color: #00d4ff;
+    }
+
+    .settings-content input {
+      width: 100%;
+      padding: 8px;
+      background: #0f0f23;
+      border: 1px solid #00d4ff;
+      color: #fff;
+    }
+
+    .close-settings {
+      margin-top: 20px;
+      padding: 10px 30px;
+      background: #ff00ff;
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">QUAD BROWSER</div>
+    <div class="controls">
+      <button class="split-btn" data-split="1">1</button>
+      <button class="split-btn" data-split="2">2</button>
+      <button class="split-btn active" data-split="4">4</button>
+      <button class="export-btn" id="exportBtn">EXPORT</button>
+      <button class="settings-btn" id="settingsBtn">SETTINGS</button>
+    </div>
+  </div>
+
+  <div class="browser-grid" id="browserGrid">
+    <!-- Pane 1: ChatGPT -->
+    <div class="browser-pane" data-source="ChatGPT">
+      <div class="url-bar">
+        <input type="text" class="url-input" value="https://chatgpt.com/" placeholder="URL">
+        <button class="go-btn">GO</button>
+      </div>
+      <span class="pane-number">#1</span>
+      <span class="pane-label">ChatGPT</span>
+      <div class="webview-container">
+        <webview src="https://chatgpt.com/" class="webview"></webview>
+      </div>
+      <div class="coord-display">50% | 中央(0,0) 右下(0,0)</div>
+    </div>
+
+    <!-- Pane 2: Gemini -->
+    <div class="browser-pane" data-source="Gemini">
+      <div class="url-bar">
+        <input type="text" class="url-input" value="https://gemini.google.com/" placeholder="URL">
+        <button class="go-btn">GO</button>
+      </div>
+      <span class="pane-number">#2</span>
+      <span class="pane-label">Gemini</span>
+      <div class="webview-container">
+        <webview src="https://gemini.google.com/" class="webview"></webview>
+      </div>
+      <div class="coord-display">50% | 中央(0,0) 右下(0,0)</div>
+    </div>
+
+    <!-- Pane 3: Claude -->
+    <div class="browser-pane" data-source="Claude">
+      <div class="url-bar">
+        <input type="text" class="url-input" value="https://claude.ai/" placeholder="URL">
+        <button class="go-btn">GO</button>
+      </div>
+      <span class="pane-number">#3</span>
+      <span class="pane-label">Claude</span>
+      <div class="webview-container">
+        <webview src="https://claude.ai/" class="webview"></webview>
+      </div>
+      <div class="coord-display">50% | 中央(0,0) 右下(0,0)</div>
+    </div>
+
+    <!-- Pane 4: Grok -->
+    <div class="browser-pane" data-source="Grok">
+      <div class="url-bar">
+        <input type="text" class="url-input" value="https://grok.com/" placeholder="URL">
+        <button class="go-btn">GO</button>
+      </div>
+      <span class="pane-number">#4</span>
+      <span class="pane-label">Grok</span>
+      <div class="webview-container">
+        <webview src="https://grok.com/" class="webview"></webview>
+      </div>
+      <div class="coord-display">50% | 中央(0,0) 右下(0,0)</div>
+    </div>
+  </div>
+
+  <!-- Settings Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-content">
+      <h2>SETTINGS</h2>
+      <label>Pane 1 URL:</label>
+      <input type="text" id="url1" value="https://chatgpt.com/">
+      <label>Pane 2 URL:</label>
+      <input type="text" id="url2" value="https://gemini.google.com/">
+      <label>Pane 3 URL:</label>
+      <input type="text" id="url3" value="https://claude.ai/">
+      <label>Pane 4 URL:</label>
+      <input type="text" id="url4" value="https://grok.com/">
+      <button class="close-settings" id="closeSettings">CLOSE</button>
+    </div>
+  </div>
+
+  <script>
+    // Split buttons
+    const splitBtns = document.querySelectorAll('.split-btn');
+    const browserGrid = document.getElementById('browserGrid');
+
+    splitBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        splitBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const split = btn.dataset.split;
+        browserGrid.className = 'browser-grid split-' + split;
+      });
+    });
+
+    // GO buttons
+    document.querySelectorAll('.browser-pane').forEach(pane => {
+      const goBtn = pane.querySelector('.go-btn');
+      const urlInput = pane.querySelector('.url-input');
+      const webview = pane.querySelector('webview');
+
+      goBtn.addEventListener('click', () => {
+        let url = urlInput.value.trim();
+        if (!url.startsWith('http://') && !url.startsWith('https://')) {
+          url = 'https://' + url;
+        }
+        webview.src = url;
+        urlInput.value = url;
+      });
+
+      urlInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') goBtn.click();
+      });
+
+      // Update URL when webview navigates
+      webview.addEventListener('did-navigate', (e) => {
+        urlInput.value = e.url;
+      });
+    });
+
+    // Coordinate display update
+    function updateCoordinates() {
+      document.querySelectorAll('.browser-pane').forEach(pane => {
+        const rect = pane.getBoundingClientRect();
+        const coordDisplay = pane.querySelector('.coord-display');
+        const centerX = Math.round(rect.left + rect.width / 2);
+        const centerY = Math.round(rect.top + rect.height / 2);
+        const rightX = Math.round(rect.right);
+        const bottomY = Math.round(rect.bottom);
+
+        // Calculate percentage based on visible panes
+        const visiblePanes = document.querySelectorAll('.browser-pane:not([style*="display: none"])').length;
+        const percentage = Math.round(100 / visiblePanes);
+
+        coordDisplay.textContent = `${percentage}% | 中央(${centerX},${centerY}) 右下(${rightX},${bottomY})`;
+      });
+    }
+
+    // Update coordinates on resize and split change
+    window.addEventListener('resize', updateCoordinates);
+    splitBtns.forEach(btn => btn.addEventListener('click', () => setTimeout(updateCoordinates, 100)));
+    setTimeout(updateCoordinates, 500);
+
+    // Settings panel
+    const settingsBtn = document.getElementById('settingsBtn');
+    const settingsPanel = document.getElementById('settingsPanel');
+    const closeSettings = document.getElementById('closeSettings');
+
+    settingsBtn.addEventListener('click', () => {
+      settingsPanel.classList.add('active');
+    });
+
+    closeSettings.addEventListener('click', () => {
+      settingsPanel.classList.remove('active');
+    });
+
+    // EXPORT button - JSON export
+    const exportBtn = document.getElementById('exportBtn');
+
+    exportBtn.addEventListener('click', async () => {
+      const panes = document.querySelectorAll('.browser-pane');
+      const items = [];
+
+      for (const pane of panes) {
+        const source = pane.dataset.source;
+        const urlInput = pane.querySelector('.url-input');
+        const webview = pane.querySelector('webview');
+
+        let content = '';
+        try {
+          // Try to get text content from webview
+          content = await webview.executeJavaScript(`
+            (function() {
+              // Try to find the last AI response
+              // This is a generic approach - may need adjustment per site
+              const selectors = [
+                '[data-message-author-role="assistant"]',
+                '.message-content',
+                '.response-content',
+                '.markdown-body',
+                '.prose',
+                'article',
+                '.chat-message'
+              ];
+
+              for (const selector of selectors) {
+                const elements = document.querySelectorAll(selector);
+                if (elements.length > 0) {
+                  const last = elements[elements.length - 1];
+                  return last.innerText || last.textContent || '';
+                }
+              }
+
+              // Fallback: get body text (truncated)
+              const bodyText = document.body.innerText || '';
+              return bodyText.substring(0, 5000);
+            })()
+          `);
+        } catch (e) {
+          content = '[Could not extract content: ' + e.message + ']';
+        }
+
+        items.push({
+          source: source,
+          url: urlInput.value,
+          content: content.trim(),
+          note: ''
+        });
+      }
+
+      const exportData = {
+        context: 'Quad Browser export',
+        timestamp: new Date().toISOString(),
+        items: items
+      };
+
+      // Use Electron API to save
+      if (window.electronAPI) {
+        const result = await window.electronAPI.exportJSON(exportData);
+        if (result.success) {
+          alert('Exported to: ' + result.path);
+        }
+      } else {
+        // Fallback: download via blob
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'quad-export-' + Date.now() + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  </script>
+</body>
+</html>
