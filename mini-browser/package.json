@@ -1,11 +1,15 @@
 {
   "name": "quad-browser",
-  "version": "1.1.0",
-  "description": "4分割AIブラウザ - ChatGPT, Gemini, Claude, Grok を同時操作",
+  "version": "1.2.0",
+  "description": "4分割AIブラウザ - ChatGPT, Gemini, Claude, Grok を同時操作 + MCP対応（赤兎馬ラウザー）",
   "main": "main.js",
+  "bin": {
+    "quad-mcp": "./mcp-server.js"
+  },
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder"
+    "build": "electron-builder",
+    "mcp": "node mcp-server.js"
   },
   "keywords": [
     "electron",
@@ -14,7 +18,9 @@
     "chatgpt",
     "gemini",
     "claude",
-    "grok"
+    "grok",
+    "mcp",
+    "model-context-protocol"
   ],
   "author": "almostwipeout",
   "license": "MIT",

@@ -1,5 +1,60 @@
 # Quad Browser - Changelog
 
+## [V1.2] - 2026-01-18
+
+### 赤兎馬ラウザー - MCP対応
+
+**コンセプト:**
+ClaudeがQuad Browserを「乗りこなす」ためのMCPサーバー実装。
+関羽が赤兎馬に乗るように、Claudeが4LLMを操縦できるようになった。
+
+**新機能:**
+- **MCPサーバー** (`mcp-server.js`) - Claude Desktop/Claude Codeから接続可能
+- **HTTP API** (port 19850) - MCPサーバーとElectronアプリの連携用
+
+**MCPツール:**
+| ツール | 説明 |
+|--------|------|
+| `get_responses` | 4LLMの回答を一括取得 |
+| `send_prompt` | 4LLMに同時にプロンプト入力 |
+| `export_json` | JSON形式でエクスポート |
+| `navigate` | 指定ペインのURL変更 |
+| `get_status` | 現在の状態を取得 |
+
+**使い方:**
+```bash
+# Quad Browserを起動
+npm start
+
+# Claude Desktopの設定に追加
+# ~/.config/claude/claude_desktop_config.json (Mac/Linux)
+# %APPDATA%\Claude\claude_desktop_config.json (Windows)
+```
+
+```json
+{
+  "mcpServers": {
+    "quad-browser": {
+      "command": "node",
+      "args": ["C:\\Users\\s\\livellm\\mini-browser\\mcp-server.js"]
+    }
+  }
+}
+```
+
+**アーキテクチャ:**
+```
+Claude（関羽）
+    ↓ MCP (stdio)
+mcp-server.js
+    ↓ HTTP (localhost:19850)
+Quad Browser（赤兎馬）
+    ↓ webview
+ChatGPT / Gemini / Claude / Grok
+```
+
+---
+
 ## [V1.1] - 2026-01-18
 
 ### JSONエクスポート機能追加
