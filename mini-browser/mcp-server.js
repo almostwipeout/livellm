@@ -1,103 +1,142 @@
 #!/usr/bin/env node
 /**
  * 赤兎馬ラウザー MCP Server
- * Quad BrowserをClaudeから操作するためのMCPサーバー
+ *
+ * ClaudeがQuad Browserを「乗りこなす」ためのMCPサーバー。
+ * 関羽が赤兎馬に乗るように、4LLMを同時に操縦できる。
+ *
+ * アーキテクチャ:
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  Claude Desktop / Claude Code                            │
+ * │       ↓ MCP Protocol (stdio, JSON-RPC 2.0)               │
+ * │  [このファイル: mcp-server.js]                            │
+ * │       ↓ HTTP (localhost:19850)                           │
+ * │  Quad Browser (Electron)                                 │
+ * │       ↓ webview.executeJavaScript                        │
+ * │  4 LLMs (ChatGPT / Gemini / Claude / Grok)               │
+ * └──────────────────────────────────────────────────────────┘
+ *
+ * 使い方:
+ * 1. Quad Browserを起動 (npm start)
+ * 2. Claude Desktop設定にこのサーバーを追加
+ * 3. Claudeに「4LLMの回答を取得して」と言う
  */
 
 const http = require('http');
 
-// Quad BrowserのHTTP API（localhost:19850）
-const QUAD_API_HOST = 'localhost';
-const QUAD_API_PORT = 19850;
+// =============================================================================
+// Configuration
+// =============================================================================
 
-// MCPサーバー定義
-const SERVER_INFO = {
-  name: "quad-browser",
-  version: "1.2.0",
-  description: "赤兎馬ラウザー - Quad BrowserをClaudeから操作"
+const QUAD_API = {
+  host: 'localhost',
+  port: 19850,
+  timeout: 30000  // 30秒タイムアウト
 };
 
-// ツール定義
+const SERVER_INFO = {
+  name: 'quad-browser',
+  version: '1.2.1',
+  description: '赤兎馬ラウザー - ClaudeがQuad Browserを操縦するためのMCPサーバー'
+};
+
+// =============================================================================
+// Tool Definitions
+// =============================================================================
+
 const TOOLS = [
   {
-    name: "get_responses",
-    description: "4つのLLM（ChatGPT, Gemini, Claude, Grok）の現在の回答を取得する",
+    name: 'get_responses',
+    description: '4つのLLM（ChatGPT, Gemini, Claude, Grok）の現在の回答を一括取得する。各AIの最後の応答テキストが返される。',
     inputSchema: {
-      type: "object",
+      type: 'object',
       properties: {},
       required: []
     }
   },
   {
-    name: "send_prompt",
-    description: "4つのLLMに同時にプロンプトを送信する（注意：各サイトの入力欄にテキストを入力するだけで、送信ボタンは押さない）",
+    name: 'send_prompt',
+    description: '4つのLLMの入力欄に同時にプロンプトを入力する。注意：テキストを入力するだけで、送信ボタンは押さない。ユーザーが確認後に送信する想定。',
     inputSchema: {
-      type: "object",
+      type: 'object',
       properties: {
         prompt: {
-          type: "string",
-          description: "送信するプロンプト"
+          type: 'string',
+          description: '入力するプロンプトテキスト'
         }
       },
-      required: ["prompt"]
+      required: ['prompt']
     }
   },
   {
-    name: "export_json",
-    description: "現在の4LLMの回答をJSONファイルとしてエクスポートする",
+    name: 'export_json',
+    description: '現在の4LLMの回答をJSON形式で取得する。ファイル保存はせず、構造化されたデータを返す。',
     inputSchema: {
-      type: "object",
+      type: 'object',
       properties: {
         context: {
-          type: "string",
-          description: "エクスポートのコンテキスト説明（オプション）"
+          type: 'string',
+          description: 'エクスポートのコンテキスト説明（例：「API設計についての比較」）'
         }
       },
       required: []
     }
   },
   {
-    name: "navigate",
-    description: "指定したペインのURLを変更する",
+    name: 'navigate',
+    description: '指定したペインのURLを変更する。ペイン番号は1-4。',
     inputSchema: {
-      type: "object",
+      type: 'object',
       properties: {
         pane: {
-          type: "number",
-          description: "ペイン番号（1-4）"
+          type: 'number',
+          description: 'ペイン番号（1=ChatGPT, 2=Gemini, 3=Claude, 4=Grok）',
+          minimum: 1,
+          maximum: 4
         },
         url: {
-          type: "string",
-          description: "移動先URL"
+          type: 'string',
+          description: '移動先URL'
         }
       },
-      required: ["pane", "url"]
+      required: ['pane', 'url']
     }
   },
   {
-    name: "get_status",
-    description: "Quad Browserの現在の状態を取得する（各ペインのURL、分割モードなど）",
+    name: 'get_status',
+    description: 'Quad Browserの現在の状態を取得する。各ペインのURL、分割モード、APIポート番号などが返される。',
     inputSchema: {
-      type: "object",
+      type: 'object',
       properties: {},
       required: []
     }
   }
 ];
 
-// Quad Browser APIへのリクエスト
+// =============================================================================
+// HTTP Client for Quad Browser API
+// =============================================================================
+
+/**
+ * Quad BrowserのHTTP APIを呼び出す
+ * @param {string} endpoint - APIエンドポイント（例：'/api/get-responses'）
+ * @param {Object} data - POSTするデータ
+ * @returns {Promise<Object>} - APIレスポンス
+ */
 function callQuadAPI(endpoint, data = {}) {
   return new Promise((resolve, reject) => {
     const postData = JSON.stringify(data);
+
     const options = {
-      hostname: QUAD_API_HOST,
-      port: QUAD_API_PORT,
+      hostname: QUAD_API.host,
+      port: QUAD_API.port,
       path: endpoint,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Content-Length': Buffer.byteLength(postData)
-      }
+      },
+      timeout: QUAD_API.timeout
     };
 
     const req = http.request(options, (res) => {
@@ -113,7 +152,16 @@ function callQuadAPI(endpoint, data = {}) {
     });
 
     req.on('error', (e) => {
-      reject(new Error(`Quad Browser接続エラー: ${e.message}。Quad Browserが起動していることを確認してください。`));
+      reject(new Error(
+        `Quad Browser接続エラー: ${e.message}\n` +
+        `Quad Browserが起動していることを確認してください。\n` +
+        `期待するAPIエンドポイント: http://${QUAD_API.host}:${QUAD_API.port}${endpoint}`
+      ));
+    });
+
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error(`Quad Browser APIタイムアウト (${QUAD_API.timeout}ms)`));
     });
 
     req.write(postData);
@@ -121,20 +169,38 @@ function callQuadAPI(endpoint, data = {}) {
   });
 }
 
-// ツール実行
-async function executeTool(name, args) {
+// =============================================================================
+// Tool Execution
+// =============================================================================
+
+/**
+ * ツールを実行
+ * @param {string} name - ツール名
+ * @param {Object} args - 引数
+ * @returns {Promise<Object>} - 実行結果
+ */
+async function executeTool(name, args = {}) {
   try {
     switch (name) {
       case 'get_responses':
         return await callQuadAPI('/api/get-responses');
 
       case 'send_prompt':
+        if (!args.prompt) {
+          return { error: 'prompt は必須パラメータです' };
+        }
         return await callQuadAPI('/api/send-prompt', { prompt: args.prompt });
 
       case 'export_json':
-        return await callQuadAPI('/api/export', { context: args.context || 'Quad Browser export' });
+        return await callQuadAPI('/api/export', { context: args.context });
 
       case 'navigate':
+        if (!args.pane || !args.url) {
+          return { error: 'pane と url は必須パラメータです' };
+        }
+        if (args.pane < 1 || args.pane > 4) {
+          return { error: 'pane は 1-4 の範囲で指定してください' };
+        }
         return await callQuadAPI('/api/navigate', { pane: args.pane, url: args.url });
 
       case 'get_status':
@@ -148,40 +214,54 @@ async function executeTool(name, args) {
   }
 }
 
-// stdio JSON-RPC処理
-let buffer = '';
+// =============================================================================
+// MCP Protocol Handler (JSON-RPC 2.0 over stdio)
+// =============================================================================
+
+let inputBuffer = '';
 
 process.stdin.setEncoding('utf8');
 process.stdin.on('data', async (chunk) => {
-  buffer += chunk;
+  inputBuffer += chunk;
 
   // 改行区切りでメッセージを処理
-  const lines = buffer.split('\n');
-  buffer = lines.pop(); // 最後の不完全な行を保持
+  const lines = inputBuffer.split('\n');
+  inputBuffer = lines.pop() || '';  // 最後の不完全な行を保持
 
   for (const line of lines) {
     if (!line.trim()) continue;
 
     try {
       const message = JSON.parse(line);
-      const response = await handleMessage(message);
+      const response = await handleMCPMessage(message);
       if (response) {
         process.stdout.write(JSON.stringify(response) + '\n');
       }
     } catch (e) {
-      process.stderr.write(`Parse error: ${e.message}\n`);
+      process.stderr.write(`JSON parse error: ${e.message}\n`);
     }
   }
 });
 
-async function handleMessage(message) {
+/**
+ * MCPメッセージを処理
+ * @param {Object} message - JSON-RPCメッセージ
+ * @returns {Object|null} - レスポンス（通知の場合はnull）
+ */
+async function handleMCPMessage(message) {
   const { jsonrpc, id, method, params } = message;
 
+  // JSON-RPC 2.0バリデーション
   if (jsonrpc !== '2.0') {
-    return { jsonrpc: '2.0', id, error: { code: -32600, message: 'Invalid Request' } };
+    return {
+      jsonrpc: '2.0',
+      id,
+      error: { code: -32600, message: 'Invalid Request: jsonrpc must be "2.0"' }
+    };
   }
 
   switch (method) {
+    // 初期化
     case 'initialize':
       return {
         jsonrpc: '2.0',
@@ -195,6 +275,7 @@ async function handleMessage(message) {
         }
       };
 
+    // ツール一覧
     case 'tools/list':
       return {
         jsonrpc: '2.0',
@@ -202,9 +283,11 @@ async function handleMessage(message) {
         result: { tools: TOOLS }
       };
 
+    // ツール実行
     case 'tools/call':
-      const { name, arguments: args } = params;
-      const result = await executeTool(name, args || {});
+      const { name, arguments: toolArgs } = params || {};
+      const result = await executeTool(name, toolArgs || {});
+
       return {
         jsonrpc: '2.0',
         id,
@@ -218,10 +301,11 @@ async function handleMessage(message) {
         }
       };
 
+    // 初期化完了通知（応答不要）
     case 'notifications/initialized':
-      // 初期化完了通知（応答不要）
       return null;
 
+    // 未知のメソッド
     default:
       return {
         jsonrpc: '2.0',
@@ -231,5 +315,17 @@ async function handleMessage(message) {
   }
 }
 
-// 起動メッセージ
-process.stderr.write('赤兎馬ラウザー MCP Server started\n');
+// =============================================================================
+// Startup
+// =============================================================================
+
+process.stderr.write(`
+╔══════════════════════════════════════════════════════════╗
+║  赤兎馬ラウザー MCP Server v${SERVER_INFO.version}                     ║
+║  Quad Browser を Claude から操縦するための MCP サーバー   ║
+╠══════════════════════════════════════════════════════════╣
+║  Quad Browser API: http://${QUAD_API.host}:${QUAD_API.port}              ║
+║  Tools: get_responses, send_prompt, export_json,         ║
+║         navigate, get_status                             ║
+╚══════════════════════════════════════════════════════════╝
+`);

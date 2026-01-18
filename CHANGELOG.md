@@ -1,5 +1,60 @@
 # Quad Browser - Changelog
 
+## [V1.2.1] - 2026-01-18
+
+### コードリファクタリング - 4LLMレビュー反映
+
+**背景:**
+GPT-5 Pro、Gemini Ultra、Claude、Grok の4LLMからコードレビューを受けた。
+共通指摘: 「思想は良い、実装が追いついてない」（70点評価）
+
+**4LLMからの主な指摘:**
+| 指摘 | 問題 | 解決策 |
+|------|------|--------|
+| DRY違反 | getResponses/exportJSONで重複 | 取得・構造化・保存を分離 |
+| 汎用セレクタ | 各AI専用化されていない | Adapterパターン導入 |
+| if文連打 | 抽象化不足 | Strategy/Adapterで統一 |
+| 意図不明 | コメント不足 | 思想をコードに載せる |
+
+**変更内容:**
+
+1. **adapters.js 新規追加**
+   - 各AI専用のセレクタとロジックを分離
+   - ChatGPT, Gemini, Claude, Grok それぞれ専用Adapter
+   - フォールバック用のUnknown Adapter
+
+2. **main.js リファクタリング**
+   - セクション分け（Window / API / Core / Helper / IPC / Lifecycle）
+   - `getAllResponses()` - 取得のみ
+   - `exportToJSON()` - 構造化のみ（getAllResponsesを呼ぶ）
+   - 重複コード排除
+
+3. **mcp-server.js 改善**
+   - アーキテクチャ図をコメントに追加
+   - タイムアウト設定追加
+   - エラーメッセージの詳細化
+   - 起動時バナー追加
+
+**ファイル構造:**
+```
+mini-browser/
+├── adapters.js     ← NEW: 各AI専用Adapter
+├── main.js         ← リファクタリング済
+├── mcp-server.js   ← 改善済
+├── preload.js
+├── index.html
+└── package.json
+```
+
+**設計思想:**
+```
+「汎用セレクタに逃げない」
+「各AIの構造を理解して専用化」
+「取得・構造化・保存を明確に分離」
+```
+
+---
+
 ## [V1.2] - 2026-01-18
 
 ### 赤兎馬ラウザー - MCP対応

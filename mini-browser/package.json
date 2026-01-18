@@ -1,6 +1,6 @@
 {
   "name": "quad-browser",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "4分割AIブラウザ - ChatGPT, Gemini, Claude, Grok を同時操作 + MCP対応（赤兎馬ラウザー）",
   "main": "main.js",
   "bin": {
