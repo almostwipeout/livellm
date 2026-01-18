@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>??? - LIVE LLM</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#000;overflow:hidden;font-family:'Courier New',monospace}
+#canvas-container{width:100vw;height:100vh}
+#loading{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#ff4500;font-size:14px;text-align:center;z-index:100}
+#loading-bar{width:200px;height:2px;background:#222;margin-top:15px}
+#loading-progress{width:0%;height:100%;background:#ff4500;transition:width 0.3s}
+#loading.hidden{display:none}
+#breath-overlay{position:fixed;top:0;left:0;width:100%;height:100%;background:#000;pointer-events:none;z-index:50;animation:breath 97s infinite cubic-bezier(0.4,0,0.2,1)}
+@keyframes breath{0%{opacity:0.95}32%{opacity:0.7}41%{opacity:0.4}47%{opacity:0}52%{opacity:0.3}58%{opacity:0.6}66%{opacity:0.85}100%{opacity:0.95}}
+</style>
+</head>
+<body>
+<div id="canvas-container"></div>
+<div id="breath-overlay"></div>
+<div id="loading">
+<div>LOADING MODEL</div>
+<div style="margin-top:8px;font-size:11px;opacity:0.6">56MB</div>
+<div id="loading-bar"><div id="loading-progress"></div></div>
+<div id="loading-percent" style="margin-top:8px;font-size:12px">0%</div>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+<script>
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x000000);
+const camera=new THREE.PerspectiveCamera(45,innerWidth/innerHeight,0.1,1000);camera.position.set(0,2,5);
+const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=0.8;
+document.getElementById('canvas-container').appendChild(renderer.domElement);
+const controls=new THREE.OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=0.05;controls.autoRotate=true;controls.autoRotateSpeed=0.5;
+scene.add(new THREE.AmbientLight(0x1a0a00,0.3));
+const m=new THREE.DirectionalLight(0xff4500,1.2);m.position.set(5,10,5);scene.add(m);
+const b=new THREE.DirectionalLight(0xff2200,0.6);b.position.set(-5,-5,-5);scene.add(b);
+const r=new THREE.PointLight(0xff6b00,0.8,20);r.position.set(0,3,-3);scene.add(r);
+const bot=new THREE.PointLight(0xff3300,1.0,15);bot.position.set(0,-5,0);scene.add(bot);
+new THREE.GLTFLoader().load('./hitem3d.glb',g=>{const md=g.scene;const bx=new THREE.Box3().setFromObject(md);const sz=bx.getSize(new THREE.Vector3());const sc=3/Math.max(sz.x,sz.y,sz.z);md.scale.setScalar(sc);md.position.sub(bx.getCenter(new THREE.Vector3()).multiplyScalar(sc));scene.add(md);document.getElementById('loading').classList.add('hidden');},x=>{const p=Math.round((x.loaded/x.total)*100);document.getElementById('loading-progress').style.width=p+'%';document.getElementById('loading-percent').textContent=p+'%';},e=>{document.getElementById('loading').innerHTML='<div style="color:#ff4500">ERROR</div>';});
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera);}animate();
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+</script>
+</body>
+</html>
