@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu } = require('electron');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
@@ -232,21 +232,41 @@ app.whenReady().then(() => {
   createWindow();
   startHTTPServer();
 
-  // ズーム制御: メインウィンドウでCtrl++/-/0 をキャプチャ
-  mainWindow.webContents.on('before-input-event', (event, input) => {
-    if (input.control && !input.shift && !input.alt && input.type === 'keyDown') {
-      if (input.key === '+' || input.key === '=') {
-        event.preventDefault();
-        mainWindow.webContents.send('zoom-command', 'in');
-      } else if (input.key === '-') {
-        event.preventDefault();
-        mainWindow.webContents.send('zoom-command', 'out');
-      } else if (input.key === '0') {
-        event.preventDefault();
-        mainWindow.webContents.send('zoom-command', 'reset');
-      }
+  // カスタムメニュー（ズーム機能付き）
+  const menuTemplate = [
+    {
+      label: 'File',
+      submenu: [
+        { role: 'quit', label: 'Exit' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        {
+          label: 'Zoom In (All Panes)',
+          accelerator: 'CmdOrCtrl+=',
+          click: () => mainWindow.webContents.send('zoom-command', 'in')
+        },
+        {
+          label: 'Zoom Out (All Panes)',
+          accelerator: 'CmdOrCtrl+-',
+          click: () => mainWindow.webContents.send('zoom-command', 'out')
+        },
+        {
+          label: 'Reset Zoom (All Panes)',
+          accelerator: 'CmdOrCtrl+0',
+          click: () => mainWindow.webContents.send('zoom-command', 'reset')
+        },
+        { type: 'separator' },
+        { role: 'toggleDevTools', label: 'Developer Tools' },
+        { role: 'reload', label: 'Reload' }
+      ]
     }
-  });
+  ];
+
+  const menu = Menu.buildFromTemplate(menuTemplate);
+  Menu.setApplicationMenu(menu);
 });
 
 app.on('window-all-closed', () => {
