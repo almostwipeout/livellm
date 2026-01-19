@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Quad Browser</title>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@300;400&display=swap');
 
@@ -35,9 +36,8 @@
     .header-title {
       font-size: 1.1rem;
       font-weight: 700;
-      color: #0ff;
-      text-shadow: 0 0 10px #0ff8;
       letter-spacing: 2px;
+      text-shadow: 0 0 10px #0ff8;
     }
 
     .layout-toggle {
@@ -55,13 +55,46 @@
       cursor: pointer;
       font-family: 'Roboto Mono', monospace;
       font-size: 0.75rem;
-      transition: all 0.3s;
     }
 
-    .layout-btn:hover, .layout-btn.active {
+    .layout-btn.active,
+    .layout-btn:hover {
       background: #0ff;
       color: #000;
       box-shadow: 0 0 12px #0ff8;
+    }
+
+    .export-btn {
+      padding: 8px 18px;
+      background: linear-gradient(90deg, #00ff88, #00d4ff);
+      border: none;
+      color: #001;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .export-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0,255,136,0.5);
+    }
+
+    .settings-btn {
+      background: #001122;
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .settings-btn:hover {
+      background: #0ff;
+      color: #000;
     }
 
     #grid-container {
@@ -74,49 +107,20 @@
       background: #000;
     }
 
-    #grid-container.layout-2 {
-      grid-template-columns: 1fr 1fr;
-      grid-template-rows: 1fr;
-    }
-
-    #grid-container.layout-2 .quadrant:nth-child(3),
-    #grid-container.layout-2 .quadrant:nth-child(4) {
-      display: none;
-    }
-
-    #grid-container.layout-1 {
-      grid-template-columns: 1fr;
-      grid-template-rows: 1fr;
-    }
-
-    #grid-container.layout-1 .quadrant:nth-child(2),
-    #grid-container.layout-1 .quadrant:nth-child(3),
-    #grid-container.layout-1 .quadrant:nth-child(4) {
-      display: none;
-    }
-
     .quadrant {
       position: relative;
       background: #0a1020;
       border: 1px solid #0ff2;
-      border-radius: 4px;
-      overflow: hidden;
       display: flex;
       flex-direction: column;
     }
 
-    .quadrant:focus-within {
-      border-color: #0ff;
-      box-shadow: 0 0 20px #0ff4;
-    }
-
     .quad-nav {
-      height: 38px;
+      height: 36px;
       background: rgba(0,10,20,0.95);
       display: flex;
-      padding: 4px 8px;
+      padding: 4px;
       gap: 6px;
-      border-bottom: 1px solid #0ff2;
     }
 
     .quad-url {
@@ -124,70 +128,22 @@
       background: #001525;
       border: 1px solid #0ff3;
       color: #0ff;
-      padding: 0 10px;
-      border-radius: 4px;
+      padding: 0 8px;
       font-family: 'Roboto Mono', monospace;
-      font-size: 0.85rem;
-      transition: all 0.3s;
-    }
-
-    .quad-url:focus {
-      outline: none;
-      box-shadow: 0 0 10px #0ff6;
-      border-color: #0ff;
-    }
-
-    .quad-url::placeholder {
-      color: #0ff6;
+      font-size: 0.8rem;
     }
 
     .quad-go {
       background: linear-gradient(135deg, #0ff, #08f);
-      color: #000;
       border: none;
-      padding: 0 14px;
-      border-radius: 4px;
+      font-size: 0.7rem;
       font-weight: bold;
-      font-size: 0.75rem;
+      padding: 0 10px;
       cursor: pointer;
-      transition: all 0.3s;
-      font-family: 'Orbitron', sans-serif;
-    }
-
-    .quad-go:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 15px #0ff;
-    }
-
-    .zoom-controls {
-      display: flex;
-      gap: 2px;
-    }
-
-    .zoom-btn {
-      width: 26px;
-      height: 26px;
-      background: #001525;
-      border: 1px solid #0ff3;
-      color: #0ff;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-
-    .zoom-btn:hover {
-      background: #0ff;
-      color: #000;
     }
 
     .quad-content {
       flex: 1;
-      position: relative;
       background: #fff;
     }
 
@@ -197,502 +153,634 @@
       border: none;
     }
 
-    .quad-placeholder {
-      position: absolute;
-      inset: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #0a1020 0%, #0a0a18 100%);
-      color: #0ff8;
-      font-size: 0.9rem;
-    }
-
-    .quad-placeholder-icon {
-      font-size: 3rem;
-      margin-bottom: 12px;
-      opacity: 0.5;
-    }
-
     .quad-number {
       position: absolute;
-      top: 6px;
-      right: 8px;
-      font-size: 0.65rem;
-      color: #0ff4;
-      font-family: 'Roboto Mono', monospace;
-    }
-
-    .quad-zoom {
-      position: absolute;
-      bottom: 6px;
-      left: 8px;
+      top: 4px;
+      right: 6px;
       font-size: 0.6rem;
       color: #0ff6;
       font-family: 'Roboto Mono', monospace;
-      background: rgba(0,0,0,0.5);
-      padding: 2px 6px;
-      border-radius: 3px;
     }
 
-    .quad-coords {
-      position: absolute;
-      bottom: 6px;
-      right: 8px;
-      font-size: 0.55rem;
-      color: #0ff4;
-      font-family: 'Roboto Mono', monospace;
-      background: rgba(0,0,0,0.5);
-      padding: 2px 6px;
-      border-radius: 3px;
-    }
-
-    .quadrant.focused {
-      border-color: #0ff;
-      box-shadow: 0 0 25px #0ff6;
-    }
-
-    .zoom-toast {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,255,255,0.9);
-      color: #000;
-      padding: 12px 24px;
-      border-radius: 8px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      pointer-events: none;
-      opacity: 0;
-      transition: opacity 0.2s;
-      z-index: 9999;
-    }
-
-    .zoom-toast.show {
-      opacity: 1;
-    }
-
-    .settings-btn {
-      background: #001122;
-      border: 1px solid #0ff4;
-      color: #0ff;
-      padding: 6px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-      font-family: 'Roboto Mono', monospace;
-      font-size: 0.75rem;
-      transition: all 0.3s;
-      margin-left: 12px;
-    }
-
-    .settings-btn:hover {
-      background: #0ff;
-      color: #000;
-    }
-
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.8);
+    /* Confirmation Modal */
+    .confirm-modal-overlay {
       display: none;
-      align-items: center;
-      justify-content: center;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
       z-index: 10000;
-    }
-
-    .modal-overlay.show {
-      display: flex;
-    }
-
-    .modal {
-      background: #0a1525;
-      border: 1px solid #0ff;
-      border-radius: 12px;
-      padding: 24px;
-      width: 500px;
-      max-width: 90vw;
-      box-shadow: 0 0 40px #0ff4;
-    }
-
-    .modal h2 {
-      color: #0ff;
-      margin-bottom: 20px;
-      font-size: 1.2rem;
-      text-shadow: 0 0 10px #0ff8;
-    }
-
-    .modal-row {
-      display: flex;
+      justify-content: center;
       align-items: center;
-      margin-bottom: 12px;
-      gap: 12px;
+      backdrop-filter: blur(5px);
     }
-
-    .modal-row label {
-      width: 30px;
-      color: #0ff8;
-      font-size: 0.85rem;
-    }
-
-    .modal-row input {
-      flex: 1;
-      background: #001525;
-      border: 1px solid #0ff3;
-      color: #0ff;
-      padding: 8px 12px;
-      border-radius: 4px;
-      font-family: 'Roboto Mono', monospace;
-      font-size: 0.85rem;
-    }
-
-    .modal-row input:focus {
-      outline: none;
-      border-color: #0ff;
-      box-shadow: 0 0 10px #0ff6;
-    }
-
-    .modal-buttons {
+    .confirm-modal-overlay.active {
       display: flex;
-      gap: 12px;
-      margin-top: 20px;
-      justify-content: flex-end;
     }
-
-    .modal-btn {
-      padding: 8px 20px;
-      border-radius: 4px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: all 0.3s;
+    .confirm-modal {
+      background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%);
+      border: 2px solid #0ff;
+      border-radius: 12px;
+      padding: 30px 40px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+      animation: modalPulse 0.3s ease-out;
     }
-
-    .modal-btn.save {
-      background: linear-gradient(135deg, #0ff, #08f);
-      color: #000;
-      border: none;
-      font-weight: bold;
+    @keyframes modalPulse {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
     }
-
-    .modal-btn.save:hover {
-      box-shadow: 0 0 15px #0ff;
-    }
-
-    .modal-btn.cancel {
-      background: transparent;
-      border: 1px solid #0ff4;
+    .confirm-modal h2 {
       color: #0ff;
+      font-size: 1.4rem;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
     }
-
-    .modal-btn.cancel:hover {
-      background: #0ff2;
+    .confirm-modal p {
+      color: #8af;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+      font-family: 'Roboto Mono', monospace;
+    }
+    .confirm-modal-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .confirm-modal-btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .confirm-modal-btn.cancel {
+      background: #333;
+      color: #888;
+      border: 1px solid #555;
+    }
+    .confirm-modal-btn.cancel:hover {
+      background: #444;
+      color: #aaa;
+    }
+    .confirm-modal-btn.confirm {
+      background: linear-gradient(135deg, #00aa88 0%, #00ddaa 100%);
+      color: #000;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+    }
+    .confirm-modal-btn.confirm:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 255, 170, 0.6);
     }
   </style>
 </head>
+
 <body>
-  <header>
-    <span class="header-title">QUAD BROWSER</span>
-    <div class="layout-toggle">
-      <button class="layout-btn" data-layout="1">1</button>
-      <button class="layout-btn" data-layout="2">2</button>
-      <button class="layout-btn active" data-layout="4">4</button>
-    </div>
-    <button class="settings-btn" id="settingsBtn">SETTINGS</button>
-  </header>
 
-  <div id="grid-container">
-    <div class="quadrant" data-quadrant="1">
-      <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力...">
-        <button class="quad-go">GO</button>
-        <div class="zoom-controls">
-          <button class="zoom-btn zoom-out">-</button>
-          <button class="zoom-btn zoom-in">+</button>
-        </div>
-      </div>
-      <div class="quad-content">
-        <webview></webview>
-      </div>
-      <span class="quad-number">#1 GPT</span>
-      <span class="quad-zoom">50%</span>
-      <span class="quad-coords"></span>
-    </div>
+<header>
+  <span class="header-title">QUAD BROWSER</span>
 
-    <div class="quadrant" data-quadrant="2">
-      <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力...">
-        <button class="quad-go">GO</button>
-        <div class="zoom-controls">
-          <button class="zoom-btn zoom-out">-</button>
-          <button class="zoom-btn zoom-in">+</button>
-        </div>
-      </div>
-      <div class="quad-content">
-        <webview></webview>
-      </div>
-      <span class="quad-number">#2 Gemini</span>
-      <span class="quad-zoom">50%</span>
-      <span class="quad-coords"></span>
-    </div>
-
-    <div class="quadrant" data-quadrant="3">
-      <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力...">
-        <button class="quad-go">GO</button>
-        <div class="zoom-controls">
-          <button class="zoom-btn zoom-out">-</button>
-          <button class="zoom-btn zoom-in">+</button>
-        </div>
-      </div>
-      <div class="quad-content">
-        <webview></webview>
-      </div>
-      <span class="quad-number">#3 Claude</span>
-      <span class="quad-zoom">50%</span>
-      <span class="quad-coords"></span>
-    </div>
-
-    <div class="quadrant" data-quadrant="4">
-      <div class="quad-nav">
-        <input type="text" class="quad-url" placeholder="URLを入力...">
-        <button class="quad-go">GO</button>
-        <div class="zoom-controls">
-          <button class="zoom-btn zoom-out">-</button>
-          <button class="zoom-btn zoom-in">+</button>
-        </div>
-      </div>
-      <div class="quad-content">
-        <webview></webview>
-      </div>
-      <span class="quad-number">#4 Grok</span>
-      <span class="quad-zoom">50%</span>
-      <span class="quad-coords"></span>
-    </div>
+  <div class="layout-toggle">
+    <button class="layout-btn active">4</button>
   </div>
 
-  <div class="zoom-toast" id="zoomToast"></div>
+  <button class="export-btn" id="exportBtn">EXPORT</button>
+  <button class="settings-btn">SETTINGS</button>
+</header>
 
-  <!-- 設定モーダル -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal">
-      <h2>初期URL設定</h2>
-      <div class="modal-row">
-        <label>#1</label>
-        <input type="text" id="url1" placeholder="https://...">
-      </div>
-      <div class="modal-row">
-        <label>#2</label>
-        <input type="text" id="url2" placeholder="https://...">
-      </div>
-      <div class="modal-row">
-        <label>#3</label>
-        <input type="text" id="url3" placeholder="https://...">
-      </div>
-      <div class="modal-row">
-        <label>#4</label>
-        <input type="text" id="url4" placeholder="https://...">
-      </div>
-      <div class="modal-buttons">
-        <button class="modal-btn cancel" id="cancelBtn">CANCEL</button>
-        <button class="modal-btn save" id="saveBtn">SAVE & RELOAD</button>
-      </div>
+<div id="grid-container">
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-1" value="https://chatgpt.com" />
+      <button class="quad-go" data-pane="1">GO</button>
     </div>
+    <div class="quad-content">
+      <webview id="webview-1" src="https://chatgpt.com"></webview>
+    </div>
+    <span class="quad-number">#1 GPT</span>
   </div>
 
-  <script>
-    const gridContainer = document.getElementById('grid-container');
-    const layoutBtns = document.querySelectorAll('.layout-btn');
-    const zoomToast = document.getElementById('zoomToast');
-    const settingsBtn = document.getElementById('settingsBtn');
-    const modalOverlay = document.getElementById('modalOverlay');
-    const saveBtn = document.getElementById('saveBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-2" value="https://gemini.google.com" />
+      <button class="quad-go" data-pane="2">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-2" src="https://gemini.google.com"></webview>
+    </div>
+    <span class="quad-number">#2 Gemini</span>
+  </div>
 
-    // デフォルトURL
-    const defaultUrls = {
-      1: 'https://chatgpt.com',
-      2: 'https://gemini.google.com',
-      3: 'https://claude.ai',
-      4: 'https://grok.com'
-    };
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-3" value="https://claude.ai" />
+      <button class="quad-go" data-pane="3">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-3" src="https://claude.ai"></webview>
+    </div>
+    <span class="quad-number">#3 Claude</span>
+  </div>
 
-    // localStorageから読み込み、なければデフォルト
-    function getUrls() {
-      const saved = localStorage.getItem('quadUrls');
-      return saved ? JSON.parse(saved) : { ...defaultUrls };
-    }
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-4" value="https://grok.com" />
+      <button class="quad-go" data-pane="4">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-4" src="https://grok.com"></webview>
+    </div>
+    <span class="quad-number">#4 Grok</span>
+  </div>
+</div>
 
-    // 各パネルのズームレベル（初期値50%）
-    const zoomLevels = { 1: 0.5, 2: 0.5, 3: 0.5, 4: 0.5 };
-    const DEFAULT_ZOOM = 0.5;
-    let focusedQuadrant = null;
+<script>
+// =============================================================================
+// AI Platform Adapters (DOM Selectors)
+// =============================================================================
 
-    // ズームトースト表示
-    function showZoomToast(level) {
-      zoomToast.textContent = Math.round(level * 100) + '%';
-      zoomToast.classList.add('show');
-      setTimeout(() => zoomToast.classList.remove('show'), 500);
-    }
+const ADAPTERS = {
+  1: { // ChatGPT
+    name: 'ChatGPT',
+    responseSelectors: [
+      '[data-message-author-role="assistant"] .markdown',
+      '[data-message-author-role="assistant"]',
+      '.agent-turn .markdown'
+    ],
+    inputSelectors: [
+      '#prompt-textarea',
+      'textarea[placeholder*="Message"]',
+      'textarea'
+    ],
+    sendButtonSelectors: [
+      'button[data-testid="send-button"]',
+      'button[aria-label*="Send"]',
+      'button[type="submit"]'
+    ]
+  },
+  2: { // Gemini
+    name: 'Gemini',
+    responseSelectors: [
+      '.model-response-text .markdown-main-panel',
+      '.model-response-text',
+      '.response-content',
+      'message-content[class*="model"]'
+    ],
+    inputSelectors: [
+      'rich-textarea .ql-editor',
+      'rich-textarea',
+      '[contenteditable="true"]',
+      'textarea'
+    ],
+    sendButtonSelectors: [
+      'button.send-button',
+      'button[aria-label*="Send"]',
+      'button[aria-label*="送信"]',
+      'button[mat-icon-button]',
+      '.send-button-container button',
+      'button[jsname]'
+    ]
+  },
+  3: { // Claude
+    name: 'Claude',
+    responseSelectors: [
+      '.standard-markdown',
+      '.font-claude-response-body',
+      '.font-claude-message .prose',
+      '[data-is-streaming="false"] .prose',
+      '.prose',
+      '.message-content'
+    ],
+    inputSelectors: [
+      '.ProseMirror[contenteditable="true"]',
+      '[contenteditable="true"]',
+      'textarea'
+    ],
+    sendButtonSelectors: [
+      'button[aria-label*="Send"]',
+      'button[data-testid="send-button"]',
+      'button[type="submit"]'
+    ]
+  },
+  4: { // Grok
+    name: 'Grok',
+    responseSelectors: [
+      '[role="article"]',
+      'article',
+      '[data-testid="grok-message"]',
+      '.message-bubble.assistant',
+      '.grok-response'
+    ],
+    inputSelectors: [
+      'textarea[placeholder*="Ask"]',
+      'textarea',
+      '[contenteditable="true"]'
+    ],
+    sendButtonSelectors: [
+      'button[aria-label*="Send"]',
+      'button[data-testid*="send"]',
+      'button[type="submit"]'
+    ]
+  }
+};
 
-    // 座標更新（AHK用 - webviewエリアのスクリーン絶対座標）
-    function updateCoords() {
-      const screenX = window.screenX || 0;
-      const screenY = window.screenY || 0;
+// =============================================================================
+// Webview Helpers
+// =============================================================================
 
-      document.querySelectorAll('.quadrant').forEach(quad => {
-        // webviewエリア（.quad-content）の座標を取得
-        const content = quad.querySelector('.quad-content');
-        const rect = content.getBoundingClientRect();
-        const coordsEl = quad.querySelector('.quad-coords');
-        // スクリーン絶対座標に変換
-        const cx = Math.round(screenX + rect.left + rect.width / 2);
-        const cy = Math.round(screenY + rect.top + rect.height / 2);
-        const rx = Math.round(screenX + rect.right);
-        const ry = Math.round(screenY + rect.bottom);
-        coordsEl.textContent = `中央(${cx},${cy}) 右下(${rx},${ry})`;
-      });
-    }
+function getWebview(pane) {
+  return document.getElementById(`webview-${pane}`);
+}
 
-    // 定期的に座標更新（ウィンドウ移動対応）
-    setInterval(updateCoords, 500);
+async function executeInWebview(pane, code) {
+  const webview = getWebview(pane);
+  if (!webview) {
+    return { error: `Webview ${pane} not found` };
+  }
+  try {
+    return await webview.executeJavaScript(code);
+  } catch (e) {
+    return { error: e.message };
+  }
+}
 
-    // 設定モーダル
-    settingsBtn.addEventListener('click', () => {
-      const urls = getUrls();
-      document.getElementById('url1').value = urls[1];
-      document.getElementById('url2').value = urls[2];
-      document.getElementById('url3').value = urls[3];
-      document.getElementById('url4').value = urls[4];
-      modalOverlay.classList.add('show');
-    });
+// =============================================================================
+// Get Response from Single Pane
+// =============================================================================
 
-    cancelBtn.addEventListener('click', () => {
-      modalOverlay.classList.remove('show');
-    });
+async function getResponseFromPane(pane) {
+  const adapter = ADAPTERS[pane];
+  const selectorsJson = JSON.stringify(adapter.responseSelectors);
 
-    saveBtn.addEventListener('click', () => {
-      const urls = {
-        1: document.getElementById('url1').value.trim() || defaultUrls[1],
-        2: document.getElementById('url2').value.trim() || defaultUrls[2],
-        3: document.getElementById('url3').value.trim() || defaultUrls[3],
-        4: document.getElementById('url4').value.trim() || defaultUrls[4]
+  const code = `
+    (function() {
+      const selectors = ${selectorsJson};
+      for (const sel of selectors) {
+        const elements = document.querySelectorAll(sel);
+        if (elements.length > 0) {
+          const lastEl = elements[elements.length - 1];
+          return lastEl.innerText || lastEl.textContent || '';
+        }
+      }
+      return '';
+    })();
+  `;
+
+  const result = await executeInWebview(pane, code);
+  return {
+    pane,
+    name: adapter.name,
+    response: typeof result === 'string' ? result : (result?.error || 'No response')
+  };
+}
+
+// =============================================================================
+// Send Prompt to Single Pane
+// =============================================================================
+
+async function sendPromptToPane(pane, prompt) {
+  const adapter = ADAPTERS[pane];
+  const selectorsJson = JSON.stringify(adapter.inputSelectors);
+  const promptEscaped = prompt.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+
+  const code = `
+    (function() {
+      const selectors = ${selectorsJson};
+      const prompt = '${promptEscaped}';
+      for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+            el.value = prompt;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          } else if (el.contentEditable === 'true') {
+            el.innerText = prompt;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          return { success: true, selector: sel };
+        }
+      }
+      return { success: false, error: 'No input field found' };
+    })();
+  `;
+
+  const result = await executeInWebview(pane, code);
+  return {
+    pane,
+    name: adapter.name,
+    result
+  };
+}
+
+// =============================================================================
+// IPC Handlers
+// =============================================================================
+
+// Get responses from all 4 LLMs
+window.electronAPI.onGetResponses(async (data) => {
+  const results = await Promise.all([1, 2, 3, 4].map(getResponseFromPane));
+  const response = {
+    timestamp: new Date().toISOString(),
+    responses: results
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Send prompt to all 4 LLMs
+window.electronAPI.onSendPrompt(async (data) => {
+  const results = await Promise.all([1, 2, 3, 4].map(pane => sendPromptToPane(pane, data.prompt)));
+  const response = {
+    timestamp: new Date().toISOString(),
+    prompt: data.prompt,
+    results
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Export JSON
+window.electronAPI.onExportJson(async (data) => {
+  const results = await Promise.all([1, 2, 3, 4].map(getResponseFromPane));
+  const response = {
+    timestamp: new Date().toISOString(),
+    context: data.context || '',
+    responses: results.map(r => ({
+      name: r.name,
+      response: r.response
+    }))
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Navigate pane
+window.electronAPI.onNavigatePane(async (data) => {
+  const webview = getWebview(data.pane);
+  if (webview) {
+    webview.src = data.url;
+    document.getElementById(`url-${data.pane}`).value = data.url;
+    window.electronAPI.sendResponse(data.responseChannel, { success: true, pane: data.pane, url: data.url });
+  } else {
+    window.electronAPI.sendResponse(data.responseChannel, { error: `Pane ${data.pane} not found` });
+  }
+});
+
+// Get status
+window.electronAPI.onGetStatus(async (data) => {
+  const status = {
+    timestamp: new Date().toISOString(),
+    panes: [1, 2, 3, 4].map(pane => {
+      const webview = getWebview(pane);
+      // webview.getURL() で実際の現在URLを取得（srcはDOM初期値のまま）
+      const currentUrl = webview ? (webview.getURL ? webview.getURL() : webview.src) : 'unknown';
+      return {
+        pane,
+        name: ADAPTERS[pane].name,
+        url: currentUrl
       };
-      localStorage.setItem('quadUrls', JSON.stringify(urls));
-      modalOverlay.classList.remove('show');
-      // リロードして反映
-      location.reload();
-    });
+    }),
+    apiPort: 19850
+  };
+  window.electronAPI.sendResponse(data.responseChannel, status);
+});
 
-    // モーダル外クリックで閉じる
-    modalOverlay.addEventListener('click', (e) => {
-      if (e.target === modalOverlay) {
-        modalOverlay.classList.remove('show');
+// Refresh pane (reload without changing URL)
+window.electronAPI.onRefreshPane(async (data) => {
+  const panes = data.pane ? [data.pane] : [1, 2, 3, 4];
+  const results = [];
+  
+  for (const pane of panes) {
+    const webview = getWebview(pane);
+    if (webview) {
+      webview.reload();
+      results.push({ pane, name: ADAPTERS[pane].name, success: true });
+    } else {
+      results.push({ pane, name: ADAPTERS[pane]?.name || 'unknown', success: false, error: 'webview not found' });
+    }
+  }
+  
+  window.electronAPI.sendResponse(data.responseChannel, {
+    timestamp: new Date().toISOString(),
+    action: 'refresh-pane',
+    results
+  });
+});
+
+// Execute send (Enter key) to all 4 LLMs - WITH CONFIRMATION
+window.electronAPI.onExecuteSend(async (data) => {
+  // Show confirmation modal and wait for user response
+  const confirmed = await showConfirmModal();
+  
+  if (!confirmed) {
+    // User cancelled
+    const response = {
+      timestamp: new Date().toISOString(),
+      action: 'execute-send',
+      cancelled: true,
+      error: 'ユーザーがキャンセルしました'
+    };
+    window.electronAPI.sendResponse(data.responseChannel, response);
+    return;
+  }
+  
+  // User confirmed - execute send
+  const results = await Promise.all([1, 2, 3, 4].map(pane => executeEnterInPane(pane)));
+  const response = {
+    timestamp: new Date().toISOString(),
+    action: 'execute-send',
+    results
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Confirmation modal helper
+function showConfirmModal() {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const cancelBtn = document.getElementById('modalCancel');
+    
+    modal.classList.add('active');
+    
+    const cleanup = () => {
+      modal.classList.remove('active');
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+    };
+    
+    const onConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+    
+    const onCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+    
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+  });
+}
+
+// Helper: Send Enter key to a pane
+async function executeEnterInPane(pane) {
+  const adapter = ADAPTERS[pane];
+  const inputSelectorsJson = JSON.stringify(adapter.inputSelectors);
+  const buttonSelectorsJson = JSON.stringify(adapter.sendButtonSelectors);
+
+  const code = `
+    (function() {
+      const inputSelectors = ${inputSelectorsJson};
+      const buttonSelectors = ${buttonSelectorsJson};
+      
+      // First, find and focus the input
+      let inputEl = null;
+      for (const sel of inputSelectors) {
+        inputEl = document.querySelector(sel);
+        if (inputEl) break;
+      }
+      
+      // Then, find and click the send button
+      let buttonEl = null;
+      for (const sel of buttonSelectors) {
+        buttonEl = document.querySelector(sel);
+        if (buttonEl && !buttonEl.disabled) break;
+        buttonEl = null;
+      }
+      
+      if (buttonEl) {
+        buttonEl.click();
+        return { success: true, method: 'button-click', selector: buttonEl.outerHTML.substring(0, 100) };
+      }
+      
+      // Fallback: try Enter key on input
+      if (inputEl) {
+        inputEl.focus();
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+          cancelable: true
+        });
+        inputEl.dispatchEvent(enterEvent);
+        return { success: true, method: 'enter-key', selector: inputEl.outerHTML.substring(0, 100) };
+      }
+      
+      return { success: false, error: 'No input or button found' };
+    })();
+  `;
+
+  const result = await executeInWebview(pane, code);
+  return {
+    pane,
+    name: adapter.name,
+    result
+  };
+}
+
+// =============================================================================
+// UI Event Handlers
+// =============================================================================
+
+// Export button (manual)
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const results = await Promise.all([1, 2, 3, 4].map(getResponseFromPane));
+  const exportData = {
+    timestamp: new Date().toISOString(),
+    responses: results.map(r => ({
+      name: r.name,
+      response: r.response
+    }))
+  };
+  console.log('Export:', exportData);
+
+  // Send to main process for file save + window display
+  window.electronAPI.exportSnapshot(exportData);
+});
+
+// Export result callback
+window.electronAPI.onExportResult((result) => {
+  if (result.success) {
+    console.log(`Exported to: ${result.filepath}`);
+  } else {
+    console.error('Export failed:', result.error);
+  }
+});
+
+// GO buttons
+document.querySelectorAll('.quad-go').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pane = btn.dataset.pane;
+    const urlInput = document.getElementById(`url-${pane}`);
+    const webview = getWebview(pane);
+    if (urlInput && webview) {
+      webview.src = urlInput.value;
+    }
+  });
+});
+
+// =============================================================================
+// DEBUG: Right-click on webview to open DevTools
+// =============================================================================
+
+[1, 2, 3, 4].forEach(pane => {
+  const webview = getWebview(pane);
+  if (webview) {
+    webview.addEventListener('dom-ready', () => {
+      // 右クリックでDevTools
+      webview.addEventListener('context-menu', (e) => {
+        e.preventDefault();
+        webview.openDevTools();
+      });
+    });
+    
+    // URL追跡: ナビゲーション時にURL欄を更新
+    webview.addEventListener('did-navigate', (e) => {
+      const urlInput = document.getElementById(`url-${pane}`);
+      if (urlInput && e.url) {
+        urlInput.value = e.url;
       }
     });
-
-    // レイアウト切り替え
-    layoutBtns.forEach(btn => {
-      btn.addEventListener('click', () => {
-        layoutBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        const layout = btn.dataset.layout;
-        gridContainer.className = '';
-        if (layout !== '4') {
-          gridContainer.classList.add('layout-' + layout);
-        }
-        setTimeout(updateCoords, 100);
-      });
+    
+    // URL追跡: SPA内ナビゲーション（ハッシュ変更など）
+    webview.addEventListener('did-navigate-in-page', (e) => {
+      const urlInput = document.getElementById(`url-${pane}`);
+      if (urlInput && e.url) {
+        urlInput.value = e.url;
+      }
     });
+  }
+});
 
-    // 初期化：URLを読み込んでwebviewに設定
-    function initQuadrants() {
-      const urls = getUrls();
-      document.querySelectorAll('.quadrant').forEach(quad => {
-        const input = quad.querySelector('.quad-url');
-        const goBtn = quad.querySelector('.quad-go');
-        const webview = quad.querySelector('webview');
-        const zoomEl = quad.querySelector('.quad-zoom');
-        const quadId = parseInt(quad.dataset.quadrant);
-
-        // 初期URL設定
-        const initialUrl = urls[quadId];
-        input.value = initialUrl;
-        webview.src = initialUrl;
-
-        // 初期ズーム50%を適用
-        webview.addEventListener('dom-ready', () => {
-          webview.setZoomFactor(DEFAULT_ZOOM);
-          zoomEl.textContent = Math.round(DEFAULT_ZOOM * 100) + '%';
-        });
-
-        const navigate = () => {
-          let url = input.value.trim();
-          if (!url) return;
-
-          if (!url.includes('.') || url.includes(' ')) {
-            url = 'https://www.google.com/search?q=' + encodeURIComponent(url);
-          } else if (!/^https?:\/\//i.test(url)) {
-            url = 'https://' + url;
-          }
-
-          webview.src = url;
-          input.value = url;
-        };
-
-        goBtn.addEventListener('click', navigate);
-        input.addEventListener('keypress', e => {
-          if (e.key === 'Enter') navigate();
-        });
-
-        webview.addEventListener('did-navigate', (e) => {
-          input.value = e.url;
-        });
-
-        quad.addEventListener('click', () => {
-          document.querySelectorAll('.quadrant').forEach(q => q.classList.remove('focused'));
-          quad.classList.add('focused');
-          focusedQuadrant = quadId;
-        });
-
-        quad.addEventListener('mouseenter', () => {
-          focusedQuadrant = quadId;
-        });
-
-        // ズームボタン
-        const zoomInBtn = quad.querySelector('.zoom-in');
-        const zoomOutBtn = quad.querySelector('.zoom-out');
-
-        const applyZoom = (delta) => {
-          zoomLevels[quadId] = Math.max(0.25, Math.min(3, zoomLevels[quadId] + delta));
-          webview.setZoomFactor(zoomLevels[quadId]);
-          zoomEl.textContent = Math.round(zoomLevels[quadId] * 100) + '%';
-          showZoomToast(zoomLevels[quadId]);
-        };
-
-        zoomInBtn.addEventListener('click', () => applyZoom(0.1));
-        zoomOutBtn.addEventListener('click', () => applyZoom(-0.1));
-
-        // Ctrl+ホイール（quadrantのパディング部分用）
-        quad.addEventListener('wheel', (e) => {
-          if (e.ctrlKey) {
-            e.preventDefault();
-            const delta = e.deltaY > 0 ? -0.1 : 0.1;
-            applyZoom(delta);
-          }
-        }, { passive: false });
-      });
+// Keyboard shortcut: Ctrl+1/2/3/4 to open DevTools for each pane
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && ['1', '2', '3', '4'].includes(e.key)) {
+    const pane = parseInt(e.key);
+    const webview = getWebview(pane);
+    if (webview) {
+      webview.openDevTools();
     }
+  }
+});
+</script>
 
-    // 初期化
-    initQuadrants();
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="confirm-modal-overlay">
+  <div class="confirm-modal">
+    <h2>🔔 送信確認</h2>
+    <p>4つのLLMにプロンプトを送信します</p>
+    <div class="confirm-modal-buttons">
+      <button class="confirm-modal-btn cancel" id="modalCancel">キャンセル</button>
+      <button class="confirm-modal-btn confirm" id="modalConfirm">送信する</button>
+    </div>
+  </div>
+</div>
 
-    window.addEventListener('load', () => {
-      setTimeout(updateCoords, 500);
-    });
-    window.addEventListener('resize', updateCoords);
-  </script>
 </body>
 </html>
