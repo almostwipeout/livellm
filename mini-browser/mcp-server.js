@@ -36,10 +36,16 @@ const XAI_API = {
   timeout: 60000
 };
 
-// Grok API fallback counter (per session)
+// Grok API fallback configuration
 let grokFallbackCount = 0;
-const GROK_FALLBACK_MAX = 1; // 1セッションあたり最大1回
+const GROK_FALLBACK_MAX = 2; // 1セッションあたり最大2回
+const GROK_RETRY_DELAY_MS = 1000; // リトライ間のディレイ（1秒）
 let lastSentPrompt = null; // 最後に送信されたプロンプトを保存
+
+// ディレイ用ヘルパー関数
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
 
 // =============================================================================
 // Configuration
@@ -53,8 +59,8 @@ const QUAD_API = {
 
 const SERVER_INFO = {
   name: 'quad-browser',
-  version: '1.5.0',
-  description: '赤兎馬ラウザー - 確認UI + Grok API fallback + refresh機能'
+  version: '1.6.0',
+  description: '赤兎馬ラウザー - Grok API fallback (2回リトライ) + refresh機能'
 };
 
 // =============================================================================
@@ -306,23 +312,40 @@ async function executeTool(name, args = {}) {
     switch (name) {
       case 'get_responses':
         const responses = await callQuadAPI('/api/get-responses');
-        
-        // Grokが空でfallback可能ならAPI経由で取得
+
+        // Grokが空でfallback可能ならAPI経由で取得（最大2回、ディレイ付きリトライ）
         if (responses.responses && lastSentPrompt && grokFallbackCount < GROK_FALLBACK_MAX) {
           const grokIdx = responses.responses.findIndex(r => r.name === 'Grok');
           if (grokIdx >= 0 && (!responses.responses[grokIdx].response || responses.responses[grokIdx].response === '')) {
-            try {
-              grokFallbackCount++;
-              const apiResult = await callGrokAPI(lastSentPrompt);
-              responses.responses[grokIdx].response = apiResult.text;
-              responses.responses[grokIdx].source = 'api-fallback';
-              responses.responses[grokIdx].fallbackCount = grokFallbackCount;
-            } catch (e) {
-              responses.responses[grokIdx].fallbackError = e.message;
+            let retryAttempt = 0;
+            let lastError = null;
+
+            while (retryAttempt < 2 && grokFallbackCount < GROK_FALLBACK_MAX) {
+              try {
+                if (retryAttempt > 0) {
+                  await sleep(GROK_RETRY_DELAY_MS);
+                }
+                grokFallbackCount++;
+                retryAttempt++;
+                const apiResult = await callGrokAPI(lastSentPrompt);
+                responses.responses[grokIdx].response = apiResult.text;
+                responses.responses[grokIdx].source = 'api-fallback';
+                responses.responses[grokIdx].fallbackCount = grokFallbackCount;
+                responses.responses[grokIdx].retryAttempt = retryAttempt;
+                lastError = null;
+                break; // 成功したらループ終了
+              } catch (e) {
+                lastError = e.message;
+              }
+            }
+
+            if (lastError) {
+              responses.responses[grokIdx].fallbackError = lastError;
+              responses.responses[grokIdx].retryAttempts = retryAttempt;
             }
           }
         }
-        
+
         return responses;
 
       case 'send_prompt':

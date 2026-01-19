@@ -162,81 +162,6 @@
       font-family: 'Roboto Mono', monospace;
     }
 
-    /* Confirmation Modal */
-    .confirm-modal-overlay {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: 10000;
-      justify-content: center;
-      align-items: center;
-      backdrop-filter: blur(5px);
-    }
-    .confirm-modal-overlay.active {
-      display: flex;
-    }
-    .confirm-modal {
-      background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%);
-      border: 2px solid #0ff;
-      border-radius: 12px;
-      padding: 30px 40px;
-      text-align: center;
-      box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
-      animation: modalPulse 0.3s ease-out;
-    }
-    @keyframes modalPulse {
-      0% { transform: scale(0.8); opacity: 0; }
-      100% { transform: scale(1); opacity: 1; }
-    }
-    .confirm-modal h2 {
-      color: #0ff;
-      font-size: 1.4rem;
-      margin-bottom: 15px;
-      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
-    }
-    .confirm-modal p {
-      color: #8af;
-      font-size: 0.95rem;
-      margin-bottom: 25px;
-      font-family: 'Roboto Mono', monospace;
-    }
-    .confirm-modal-buttons {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-    }
-    .confirm-modal-btn {
-      padding: 12px 30px;
-      border: none;
-      border-radius: 6px;
-      font-family: 'Orbitron', sans-serif;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .confirm-modal-btn.cancel {
-      background: #333;
-      color: #888;
-      border: 1px solid #555;
-    }
-    .confirm-modal-btn.cancel:hover {
-      background: #444;
-      color: #aaa;
-    }
-    .confirm-modal-btn.confirm {
-      background: linear-gradient(135deg, #00aa88 0%, #00ddaa 100%);
-      color: #000;
-      font-weight: bold;
-      box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
-    }
-    .confirm-modal-btn.confirm:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px rgba(0, 255, 170, 0.6);
-    }
   </style>
 </head>
 
@@ -569,24 +494,8 @@ window.electronAPI.onRefreshPane(async (data) => {
   });
 });
 
-// Execute send (Enter key) to all 4 LLMs - WITH CONFIRMATION
+// Execute send (Enter key) to all 4 LLMs - 直接実行（確認なし）
 window.electronAPI.onExecuteSend(async (data) => {
-  // Show confirmation modal and wait for user response
-  const confirmed = await showConfirmModal();
-  
-  if (!confirmed) {
-    // User cancelled
-    const response = {
-      timestamp: new Date().toISOString(),
-      action: 'execute-send',
-      cancelled: true,
-      error: 'ユーザーがキャンセルしました'
-    };
-    window.electronAPI.sendResponse(data.responseChannel, response);
-    return;
-  }
-  
-  // User confirmed - execute send
   const results = await Promise.all([1, 2, 3, 4].map(pane => executeEnterInPane(pane)));
   const response = {
     timestamp: new Date().toISOString(),
@@ -595,36 +504,6 @@ window.electronAPI.onExecuteSend(async (data) => {
   };
   window.electronAPI.sendResponse(data.responseChannel, response);
 });
-
-// Confirmation modal helper
-function showConfirmModal() {
-  return new Promise((resolve) => {
-    const modal = document.getElementById('confirmModal');
-    const confirmBtn = document.getElementById('modalConfirm');
-    const cancelBtn = document.getElementById('modalCancel');
-    
-    modal.classList.add('active');
-    
-    const cleanup = () => {
-      modal.classList.remove('active');
-      confirmBtn.removeEventListener('click', onConfirm);
-      cancelBtn.removeEventListener('click', onCancel);
-    };
-    
-    const onConfirm = () => {
-      cleanup();
-      resolve(true);
-    };
-    
-    const onCancel = () => {
-      cleanup();
-      resolve(false);
-    };
-    
-    confirmBtn.addEventListener('click', onConfirm);
-    cancelBtn.addEventListener('click', onCancel);
-  });
-}
 
 // Helper: Send Enter key to a pane
 async function executeEnterInPane(pane) {
@@ -769,18 +648,6 @@ document.addEventListener('keydown', (e) => {
   }
 });
 </script>
-
-<!-- Confirmation Modal -->
-<div id="confirmModal" class="confirm-modal-overlay">
-  <div class="confirm-modal">
-    <h2>🔔 送信確認</h2>
-    <p>4つのLLMにプロンプトを送信します</p>
-    <div class="confirm-modal-buttons">
-      <button class="confirm-modal-btn cancel" id="modalCancel">キャンセル</button>
-      <button class="confirm-modal-btn confirm" id="modalConfirm">送信する</button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
