@@ -41,6 +41,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('refresh-pane', (event, data) => callback(data));
   },
 
+  // Zoom command from main process
+  onZoomCommand: (callback) => {
+    ipcRenderer.on('zoom-command', (event, command) => callback(command));
+  },
+
   // Send response back to main process
   sendResponse: (channel, data) => {
     ipcRenderer.send(channel, data);

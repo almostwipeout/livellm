@@ -711,19 +711,15 @@ function zoomAllReset() {
   }
 });
 
-// キーボードショートカット: Ctrl+Plus/Minus/0 で全ペインズーム
-document.addEventListener('keydown', (e) => {
-  if (e.ctrlKey && !e.shiftKey && !e.altKey) {
-    if (e.key === '+' || e.key === '=') {
-      e.preventDefault();
-      zoomAllIn();
-    } else if (e.key === '-') {
-      e.preventDefault();
-      zoomAllOut();
-    } else if (e.key === '0') {
-      e.preventDefault();
-      zoomAllReset();
-    }
+// キーボードショートカット: main.jsからのズームコマンドを受信
+window.electronAPI.onZoomCommand((command) => {
+  console.log('Zoom command received:', command);
+  if (command === 'in') {
+    zoomAllIn();
+  } else if (command === 'out') {
+    zoomAllOut();
+  } else if (command === 'reset') {
+    zoomAllReset();
   }
 });
 </script>

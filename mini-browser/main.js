@@ -231,6 +231,22 @@ async function handleRefreshPane(pane) {
 app.whenReady().then(() => {
   createWindow();
   startHTTPServer();
+
+  // ズーム制御: メインウィンドウでCtrl++/-/0 をキャプチャ
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.control && !input.shift && !input.alt && input.type === 'keyDown') {
+      if (input.key === '+' || input.key === '=') {
+        event.preventDefault();
+        mainWindow.webContents.send('zoom-command', 'in');
+      } else if (input.key === '-') {
+        event.preventDefault();
+        mainWindow.webContents.send('zoom-command', 'out');
+      } else if (input.key === '0') {
+        event.preventDefault();
+        mainWindow.webContents.send('zoom-command', 'reset');
+      }
+    }
+  });
 });
 
 app.on('window-all-closed', () => {
