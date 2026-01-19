@@ -647,6 +647,85 @@ document.addEventListener('keydown', (e) => {
     }
   }
 });
+
+// =============================================================================
+// Zoom Control (全4ペイン対応)
+// =============================================================================
+
+const zoomLevels = { 1: 1.0, 2: 1.0, 3: 1.0, 4: 1.0 };
+const ZOOM_STEP = 0.1;
+const ZOOM_MIN = 0.25;
+const ZOOM_MAX = 3.0;
+
+function setZoom(pane, factor) {
+  const webview = getWebview(pane);
+  if (!webview) return;
+
+  // 範囲制限
+  factor = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, factor));
+  zoomLevels[pane] = factor;
+
+  webview.setZoomFactor(factor);
+  console.log(`Pane ${pane} zoom: ${Math.round(factor * 100)}%`);
+}
+
+function zoomIn(pane) {
+  setZoom(pane, zoomLevels[pane] + ZOOM_STEP);
+}
+
+function zoomOut(pane) {
+  setZoom(pane, zoomLevels[pane] - ZOOM_STEP);
+}
+
+function zoomReset(pane) {
+  setZoom(pane, 1.0);
+}
+
+// 全ペインのズーム操作
+function zoomAllIn() {
+  [1, 2, 3, 4].forEach(zoomIn);
+}
+
+function zoomAllOut() {
+  [1, 2, 3, 4].forEach(zoomOut);
+}
+
+function zoomAllReset() {
+  [1, 2, 3, 4].forEach(zoomReset);
+}
+
+// マウスホイールでズーム（Ctrl押しながら）
+[1, 2, 3, 4].forEach(pane => {
+  const quadrant = document.querySelectorAll('.quadrant')[pane - 1];
+  if (quadrant) {
+    quadrant.addEventListener('wheel', (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault();
+        if (e.deltaY < 0) {
+          zoomIn(pane);
+        } else {
+          zoomOut(pane);
+        }
+      }
+    }, { passive: false });
+  }
+});
+
+// キーボードショートカット: Ctrl+Plus/Minus/0 で全ペインズーム
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && !e.shiftKey && !e.altKey) {
+    if (e.key === '+' || e.key === '=') {
+      e.preventDefault();
+      zoomAllIn();
+    } else if (e.key === '-') {
+      e.preventDefault();
+      zoomAllOut();
+    } else if (e.key === '0') {
+      e.preventDefault();
+      zoomAllReset();
+    }
+  }
+});
 </script>
 
 </body>
