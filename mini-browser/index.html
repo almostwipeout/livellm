@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quad Browser</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Roboto+Mono:wght@300;400&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, html {
+      height: 100%;
+      overflow: hidden;
+      background: #0a0a12;
+      color: #0ff;
+      font-family: 'Orbitron', sans-serif;
+    }
+
+    header {
+      height: 44px;
+      background: rgba(0,20,40,0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #0ff3;
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 16px;
+    }
+
+    .header-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #0ff8;
+    }
+
+    .layout-toggle {
+      margin-left: auto;
+      display: flex;
+      gap: 6px;
+    }
+
+    .layout-btn {
+      background: #001122;
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .layout-btn.active,
+    .layout-btn:hover {
+      background: #0ff;
+      color: #000;
+      box-shadow: 0 0 12px #0ff8;
+    }
+
+    .export-btn {
+      padding: 8px 18px;
+      background: linear-gradient(90deg, #00ff88, #00d4ff);
+      border: none;
+      color: #001;
+      font-size: 13px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: all 0.2s;
+    }
+
+    .export-btn:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(0,255,136,0.5);
+    }
+
+    .settings-btn {
+      background: #001122;
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+    }
+
+    .settings-btn:hover {
+      background: #0ff;
+      color: #000;
+    }
+
+    #grid-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      height: calc(100vh - 44px);
+      gap: 2px;
+      padding: 2px;
+      background: #000;
+    }
+
+    .quadrant {
+      position: relative;
+      background: #0a1020;
+      border: 1px solid #0ff2;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .quad-nav {
+      height: 36px;
+      background: rgba(0,10,20,0.95);
+      display: flex;
+      padding: 4px;
+      gap: 6px;
+    }
+
+    .quad-url {
+      flex: 1;
+      background: #001525;
+      border: 1px solid #0ff3;
+      color: #0ff;
+      padding: 0 8px;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    .quad-go {
+      background: linear-gradient(135deg, #0ff, #08f);
+      border: none;
+      font-size: 0.7rem;
+      font-weight: bold;
+      padding: 0 10px;
+      cursor: pointer;
+    }
+
+    .quad-content {
+      flex: 1;
+      background: #fff;
+    }
+
+    webview {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    .quad-number {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 0.6rem;
+      color: #0ff6;
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    /* Confirmation Modal */
+    .confirm-modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      backdrop-filter: blur(5px);
+    }
+    .confirm-modal-overlay.active {
+      display: flex;
+    }
+    .confirm-modal {
+      background: linear-gradient(135deg, #0a1628 0%, #0d1f3c 100%);
+      border: 2px solid #0ff;
+      border-radius: 12px;
+      padding: 30px 40px;
+      text-align: center;
+      box-shadow: 0 0 40px rgba(0, 255, 255, 0.3);
+      animation: modalPulse 0.3s ease-out;
+    }
+    @keyframes modalPulse {
+      0% { transform: scale(0.8); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .confirm-modal h2 {
+      color: #0ff;
+      font-size: 1.4rem;
+      margin-bottom: 15px;
+      text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+    }
+    .confirm-modal p {
+      color: #8af;
+      font-size: 0.95rem;
+      margin-bottom: 25px;
+      font-family: 'Roboto Mono', monospace;
+    }
+    .confirm-modal-buttons {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .confirm-modal-btn {
+      padding: 12px 30px;
+      border: none;
+      border-radius: 6px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .confirm-modal-btn.cancel {
+      background: #333;
+      color: #888;
+      border: 1px solid #555;
+    }
+    .confirm-modal-btn.cancel:hover {
+      background: #444;
+      color: #aaa;
+    }
+    .confirm-modal-btn.confirm {
+      background: linear-gradient(135deg, #00aa88 0%, #00ddaa 100%);
+      color: #000;
+      font-weight: bold;
+      box-shadow: 0 0 15px rgba(0, 255, 170, 0.4);
+    }
+    .confirm-modal-btn.confirm:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px rgba(0, 255, 170, 0.6);
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <span class="header-title">QUAD BROWSER</span>
+
+  <div class="layout-toggle">
+    <button class="layout-btn active">4</button>
+  </div>
+
+  <button class="export-btn" id="exportBtn">EXPORT</button>
+  <button class="settings-btn">SETTINGS</button>
+</header>
+
+<div id="grid-container">
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-1" value="https://chatgpt.com" />
+      <button class="quad-go" data-pane="1">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-1" src="https://chatgpt.com"></webview>
+    </div>
+    <span class="quad-number">#1 GPT</span>
+  </div>
+
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-2" value="https://gemini.google.com" />
+      <button class="quad-go" data-pane="2">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-2" src="https://gemini.google.com"></webview>
+    </div>
+    <span class="quad-number">#2 Gemini</span>
+  </div>
+
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-3" value="https://claude.ai" />
+      <button class="quad-go" data-pane="3">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-3" src="https://claude.ai"></webview>
+    </div>
+    <span class="quad-number">#3 Claude</span>
+  </div>
+
+  <div class="quadrant">
+    <div class="quad-nav">
+      <input class="quad-url" id="url-4" value="https://grok.com" />
+      <button class="quad-go" data-pane="4">GO</button>
+    </div>
+    <div class="quad-content">
+      <webview id="webview-4" src="https://grok.com"></webview>
+    </div>
+    <span class="quad-number">#4 Grok</span>
+  </div>
+</div>
+
+<script>
+// =============================================================================
+// AI Platform Adapters (DOM Selectors)
+// =============================================================================
+
+const ADAPTERS = {
+  1: { // ChatGPT
+    name: 'ChatGPT',
+    responseSelectors: [
+      '[data-message-author-role="assistant"] .markdown',
+      '[data-message-author-role="assistant"]',
+      '.agent-turn .markdown'
+    ],
+    inputSelectors: [
+      '#prompt-textarea',
+      'textarea[placeholder*="Message"]',
+      'textarea'
+    ],
+    sendButtonSelectors: [
+      'button[data-testid="send-button"]',
+      'button[aria-label*="Send"]',
+      'button[type="submit"]'
+    ]
+  },
+  2: { // Gemini
+    name: 'Gemini',
+    responseSelectors: [
+      '.model-response-text .markdown-main-panel',
+      '.model-response-text',
+      '.response-content',
+      'message-content[class*="model"]'
+    ],
+    inputSelectors: [
+      'rich-textarea .ql-editor',
+      'rich-textarea',
+      '[contenteditable="true"]',
+      'textarea'
+    ],
+    sendButtonSelectors: [
+      'button.send-button',
+      'button[aria-label*="Send"]',
+      'button[aria-label*="送信"]',
+      'button[mat-icon-button]',
+      '.send-button-container button',
+      'button[jsname]'
+    ]
+  },
+  3: { // Claude
+    name: 'Claude',
+    responseSelectors: [
+      '.standard-markdown',
+      '.font-claude-response-body',
+      '.font-claude-message .prose',
+      '[data-is-streaming="false"] .prose',
+      '.prose',
+      '.message-content'
+    ],
+    inputSelectors: [
+      '.ProseMirror[contenteditable="true"]',
+      '[contenteditable="true"]',
+      'textarea'
+    ],
+    sendButtonSelectors: [
+      'button[aria-label*="Send"]',
+      'button[data-testid="send-button"]',
+      'button[type="submit"]'
+    ]
+  },
+  4: { // Grok
+    name: 'Grok',
+    responseSelectors: [
+      '[role="article"]',
+      'article',
+      '[data-testid="grok-message"]',
+      '.message-bubble.assistant',
+      '.grok-response'
+    ],
+    inputSelectors: [
+      'textarea[placeholder*="Ask"]',
+      'textarea',
+      '[contenteditable="true"]'
+    ],
+    sendButtonSelectors: [
+      'button[aria-label*="Send"]',
+      'button[data-testid*="send"]',
+      'button[type="submit"]'
+    ]
+  }
+};
+
+// =============================================================================
+// Webview Helpers
+// =============================================================================
+
+function getWebview(pane) {
+  return document.getElementById(`webview-${pane}`);
+}
+
+async function executeInWebview(pane, code) {
+  const webview = getWebview(pane);
+  if (!webview) {
+    return { error: `Webview ${pane} not found` };
+  }
+  try {
+    return await webview.executeJavaScript(code);
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+// =============================================================================
+// Get Response from Single Pane
+// =============================================================================
+
+async function getResponseFromPane(pane) {
+  const adapter = ADAPTERS[pane];
+  const selectorsJson = JSON.stringify(adapter.responseSelectors);
+
+  const code = `
+    (function() {
+      const selectors = ${selectorsJson};
+      for (const sel of selectors) {
+        const elements = document.querySelectorAll(sel);
+        if (elements.length > 0) {
+          const lastEl = elements[elements.length - 1];
+          return lastEl.innerText || lastEl.textContent || '';
+        }
+      }
+      return '';
+    })();
+  `;
+
+  const result = await executeInWebview(pane, code);
+  return {
+    pane,
+    name: adapter.name,
+    response: typeof result === 'string' ? result : (result?.error || 'No response')
+  };
+}
+
+// =============================================================================
+// Send Prompt to Single Pane
+// =============================================================================
+
+async function sendPromptToPane(pane, prompt) {
+  const adapter = ADAPTERS[pane];
+  const selectorsJson = JSON.stringify(adapter.inputSelectors);
+  const promptEscaped = prompt.replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/\n/g, '\\n');
+
+  const code = `
+    (function() {
+      const selectors = ${selectorsJson};
+      const prompt = '${promptEscaped}';
+      for (const sel of selectors) {
+        const el = document.querySelector(sel);
+        if (el) {
+          if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') {
+            el.value = prompt;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          } else if (el.contentEditable === 'true') {
+            el.innerText = prompt;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+          return { success: true, selector: sel };
+        }
+      }
+      return { success: false, error: 'No input field found' };
+    })();
+  `;
+
+  const result = await executeInWebview(pane, code);
+  return {
+    pane,
+    name: adapter.name,
+    result
+  };
+}
+
+// =============================================================================
+// IPC Handlers
+// =============================================================================
+
+// Get responses from all 4 LLMs
+window.electronAPI.onGetResponses(async (data) => {
+  const results = await Promise.all([1, 2, 3, 4].map(getResponseFromPane));
+  const response = {
+    timestamp: new Date().toISOString(),
+    responses: results
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Send prompt to all 4 LLMs
+window.electronAPI.onSendPrompt(async (data) => {
+  const results = await Promise.all([1, 2, 3, 4].map(pane => sendPromptToPane(pane, data.prompt)));
+  const response = {
+    timestamp: new Date().toISOString(),
+    prompt: data.prompt,
+    results
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Export JSON
+window.electronAPI.onExportJson(async (data) => {
+  const results = await Promise.all([1, 2, 3, 4].map(getResponseFromPane));
+  const response = {
+    timestamp: new Date().toISOString(),
+    context: data.context || '',
+    responses: results.map(r => ({
+      name: r.name,
+      response: r.response
+    }))
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Navigate pane
+window.electronAPI.onNavigatePane(async (data) => {
+  const webview = getWebview(data.pane);
+  if (webview) {
+    webview.src = data.url;
+    document.getElementById(`url-${data.pane}`).value = data.url;
+    window.electronAPI.sendResponse(data.responseChannel, { success: true, pane: data.pane, url: data.url });
+  } else {
+    window.electronAPI.sendResponse(data.responseChannel, { error: `Pane ${data.pane} not found` });
+  }
+});
+
+// Get status
+window.electronAPI.onGetStatus(async (data) => {
+  const status = {
+    timestamp: new Date().toISOString(),
+    panes: [1, 2, 3, 4].map(pane => {
+      const webview = getWebview(pane);
+      // webview.getURL() で実際の現在URLを取得（srcはDOM初期値のまま）
+      const currentUrl = webview ? (webview.getURL ? webview.getURL() : webview.src) : 'unknown';
+      return {
+        pane,
+        name: ADAPTERS[pane].name,
+        url: currentUrl
+      };
+    }),
+    apiPort: 19850
+  };
+  window.electronAPI.sendResponse(data.responseChannel, status);
+});
+
+// Refresh pane (reload without changing URL)
+window.electronAPI.onRefreshPane(async (data) => {
+  const panes = data.pane ? [data.pane] : [1, 2, 3, 4];
+  const results = [];
+  
+  for (const pane of panes) {
+    const webview = getWebview(pane);
+    if (webview) {
+      webview.reload();
+      results.push({ pane, name: ADAPTERS[pane].name, success: true });
+    } else {
+      results.push({ pane, name: ADAPTERS[pane]?.name || 'unknown', success: false, error: 'webview not found' });
+    }
+  }
+  
+  window.electronAPI.sendResponse(data.responseChannel, {
+    timestamp: new Date().toISOString(),
+    action: 'refresh-pane',
+    results
+  });
+});
+
+// Execute send (Enter key) to all 4 LLMs - WITH CONFIRMATION
+window.electronAPI.onExecuteSend(async (data) => {
+  // Show confirmation modal and wait for user response
+  const confirmed = await showConfirmModal();
+  
+  if (!confirmed) {
+    // User cancelled
+    const response = {
+      timestamp: new Date().toISOString(),
+      action: 'execute-send',
+      cancelled: true,
+      error: 'ユーザーがキャンセルしました'
+    };
+    window.electronAPI.sendResponse(data.responseChannel, response);
+    return;
+  }
+  
+  // User confirmed - execute send
+  const results = await Promise.all([1, 2, 3, 4].map(pane => executeEnterInPane(pane)));
+  const response = {
+    timestamp: new Date().toISOString(),
+    action: 'execute-send',
+    results
+  };
+  window.electronAPI.sendResponse(data.responseChannel, response);
+});
+
+// Confirmation modal helper
+function showConfirmModal() {
+  return new Promise((resolve) => {
+    const modal = document.getElementById('confirmModal');
+    const confirmBtn = document.getElementById('modalConfirm');
+    const cancelBtn = document.getElementById('modalCancel');
+    
+    modal.classList.add('active');
+    
+    const cleanup = () => {
+      modal.classList.remove('active');
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+    };
+    
+    const onConfirm = () => {
+      cleanup();
+      resolve(true);
+    };
+    
+    const onCancel = () => {
+      cleanup();
+      resolve(false);
+    };
+    
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+  });
+}
+
+// Helper: Send Enter key to a pane
+async function executeEnterInPane(pane) {
+  const adapter = ADAPTERS[pane];
+  const inputSelectorsJson = JSON.stringify(adapter.inputSelectors);
+  const buttonSelectorsJson = JSON.stringify(adapter.sendButtonSelectors);
+
+  const code = `
+    (function() {
+      const inputSelectors = ${inputSelectorsJson};
+      const buttonSelectors = ${buttonSelectorsJson};
+      
+      // First, find and focus the input
+      let inputEl = null;
+      for (const sel of inputSelectors) {
+        inputEl = document.querySelector(sel);
+        if (inputEl) break;
+      }
+      
+      // Then, find and click the send button
+      let buttonEl = null;
+      for (const sel of buttonSelectors) {
+        buttonEl = document.querySelector(sel);
+        if (buttonEl && !buttonEl.disabled) break;
+        buttonEl = null;
+      }
+      
+      if (buttonEl) {
+        buttonEl.click();
+        return { success: true, method: 'button-click', selector: buttonEl.outerHTML.substring(0, 100) };
+      }
+      
+      // Fallback: try Enter key on input
+      if (inputEl) {
+        inputEl.focus();
+        const enterEvent = new KeyboardEvent('keydown', {
+          key: 'Enter',
+          code: 'Enter',
+          keyCode: 13,
+          which: 13,
+          bubbles: true,
+          cancelable: true
+        });
+        inputEl.dispatchEvent(enterEvent);
+        return { success: true, method: 'enter-key', selector: inputEl.outerHTML.substring(0, 100) };
+      }
+      
+      return { success: false, error: 'No input or button found' };
+    })();
+  `;
+
+  const result = await executeInWebview(pane, code);
+  return {
+    pane,
+    name: adapter.name,
+    result
+  };
+}
+
+// =============================================================================
+// UI Event Handlers
+// =============================================================================
+
+// Export button (manual)
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  const results = await Promise.all([1, 2, 3, 4].map(getResponseFromPane));
+  const exportData = {
+    timestamp: new Date().toISOString(),
+    responses: results.map(r => ({
+      name: r.name,
+      response: r.response
+    }))
+  };
+  console.log('Export:', exportData);
+
+  // Send to main process for file save + window display
+  window.electronAPI.exportSnapshot(exportData);
+});
+
+// Export result callback
+window.electronAPI.onExportResult((result) => {
+  if (result.success) {
+    console.log(`Exported to: ${result.filepath}`);
+  } else {
+    console.error('Export failed:', result.error);
+  }
+});
+
+// GO buttons
+document.querySelectorAll('.quad-go').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pane = btn.dataset.pane;
+    const urlInput = document.getElementById(`url-${pane}`);
+    const webview = getWebview(pane);
+    if (urlInput && webview) {
+      webview.src = urlInput.value;
+    }
+  });
+});
+
+// =============================================================================
+// DEBUG: Right-click on webview to open DevTools
+// =============================================================================
+
+[1, 2, 3, 4].forEach(pane => {
+  const webview = getWebview(pane);
+  if (webview) {
+    webview.addEventListener('dom-ready', () => {
+      // 右クリックでDevTools
+      webview.addEventListener('context-menu', (e) => {
+        e.preventDefault();
+        webview.openDevTools();
+      });
+    });
+    
+    // URL追跡: ナビゲーション時にURL欄を更新
+    webview.addEventListener('did-navigate', (e) => {
+      const urlInput = document.getElementById(`url-${pane}`);
+      if (urlInput && e.url) {
+        urlInput.value = e.url;
+      }
+    });
+    
+    // URL追跡: SPA内ナビゲーション（ハッシュ変更など）
+    webview.addEventListener('did-navigate-in-page', (e) => {
+      const urlInput = document.getElementById(`url-${pane}`);
+      if (urlInput && e.url) {
+        urlInput.value = e.url;
+      }
+    });
+  }
+});
+
+// Keyboard shortcut: Ctrl+1/2/3/4 to open DevTools for each pane
+document.addEventListener('keydown', (e) => {
+  if (e.ctrlKey && ['1', '2', '3', '4'].includes(e.key)) {
+    const pane = parseInt(e.key);
+    const webview = getWebview(pane);
+    if (webview) {
+      webview.openDevTools();
+    }
+  }
+});
+</script>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="confirm-modal-overlay">
+  <div class="confirm-modal">
+    <h2>🔔 送信確認</h2>
+    <p>4つのLLMにプロンプトを送信します</p>
+    <div class="confirm-modal-buttons">
+      <button class="confirm-modal-btn cancel" id="modalCancel">キャンセル</button>
+      <button class="confirm-modal-btn confirm" id="modalConfirm">送信する</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

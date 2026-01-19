@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Quad Browser - Export View</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Roboto+Mono:wght@300;400&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0a12;
+      color: #e0e0e0;
+      font-family: 'Roboto Mono', monospace;
+      padding: 20px;
+      min-height: 100vh;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #0ff3;
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      color: #0ff;
+      font-size: 1.4rem;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px #0ff8;
+      margin-bottom: 8px;
+    }
+
+    .export-count {
+      color: #888;
+      font-size: 0.85rem;
+    }
+
+    .history-container {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .snapshot {
+      background: #0d1520;
+      border: 1px solid #0ff2;
+      border-radius: 12px;
+      padding: 20px;
+    }
+
+    .snapshot-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #0ff2;
+    }
+
+    .snapshot-number {
+      font-family: 'Orbitron', sans-serif;
+      color: #0ff;
+      font-size: 1rem;
+      letter-spacing: 1px;
+    }
+
+    .snapshot-time {
+      color: #888;
+      font-size: 0.8rem;
+    }
+
+    .board {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .card {
+      background: #111822;
+      border: 1px solid #0ff3;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: linear-gradient(135deg, #001525, #002035);
+      padding: 10px 14px;
+      border-bottom: 1px solid #0ff2;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 0.65rem;
+    }
+
+    .card-icon.gpt { background: linear-gradient(135deg, #10a37f, #1a7f5a); color: #fff; }
+    .card-icon.gemini { background: linear-gradient(135deg, #4285f4, #34a853); color: #fff; }
+    .card-icon.claude { background: linear-gradient(135deg, #d4a574, #c4956a); color: #000; }
+    .card-icon.grok { background: linear-gradient(135deg, #1da1f2, #0d8bd9); color: #fff; }
+
+    .card-title {
+      font-family: 'Orbitron', sans-serif;
+      color: #0ff;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+    }
+
+    .card-body {
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .card-body::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .card-body::-webkit-scrollbar-track {
+      background: #0a0a12;
+    }
+
+    .card-body::-webkit-scrollbar-thumb {
+      background: #0ff4;
+      border-radius: 3px;
+    }
+
+    .no-response {
+      color: #666;
+      font-style: italic;
+    }
+
+    .json-toggle {
+      margin-top: 12px;
+      text-align: right;
+    }
+
+    .json-toggle button {
+      background: transparent;
+      border: 1px solid #0ff4;
+      color: #0ff;
+      padding: 6px 14px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.75rem;
+      transition: all 0.2s;
+    }
+
+    .json-toggle button:hover {
+      background: #0ff;
+      color: #000;
+    }
+
+    .json-raw {
+      margin-top: 10px;
+      background: #0a0f15;
+      border: 1px solid #0ff2;
+      border-radius: 6px;
+      padding: 12px;
+      max-height: 200px;
+      overflow: auto;
+      display: none;
+    }
+
+    .json-raw.visible {
+      display: block;
+    }
+
+    .json-raw pre {
+      font-size: 0.7rem;
+      color: #0f0;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .new-snapshot {
+      animation: flash 0.5s ease-out;
+    }
+
+    @keyframes flash {
+      0% { background: #1a3040; }
+      100% { background: #0d1520; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>EXPORT HISTORY</h1>
+  <div class="export-count" id="exportCount">0 snapshots</div>
+</header>
+
+<div class="history-container" id="historyContainer"></div>
+
+<script>
+  const LLM_CONFIG = {
+    ChatGPT: { icon: 'GPT', class: 'gpt' },
+    Gemini: { icon: 'GEM', class: 'gemini' },
+    Claude: { icon: 'CLA', class: 'claude' },
+    Grok: { icon: 'GRK', class: 'grok' }
+  };
+
+  let snapshotHistory = [];
+
+  function formatTimestamp(isoString) {
+    const d = new Date(isoString);
+    return d.toLocaleString('ja-JP', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  }
+
+  function createCard(name, response) {
+    const config = LLM_CONFIG[name] || { icon: '?', class: 'gpt' };
+    const hasResponse = response && response.trim().length > 0;
+
+    return `
+      <div class="card">
+        <div class="card-header">
+          <div class="card-icon ${config.class}">${config.icon}</div>
+          <div class="card-title">${name}</div>
+        </div>
+        <div class="card-body">
+          ${hasResponse ? response : '<span class="no-response">No response captured</span>'}
+        </div>
+      </div>
+    `;
+  }
+
+  function createSnapshotHTML(data, index) {
+    const snapshotId = `snapshot-${index}`;
+    const jsonId = `json-${index}`;
+    const responses = data.responses || [];
+
+    return `
+      <div class="snapshot new-snapshot" id="${snapshotId}">
+        <div class="snapshot-header">
+          <div class="snapshot-number">#${index} SNAPSHOT</div>
+          <div class="snapshot-time">${formatTimestamp(data.timestamp)}</div>
+        </div>
+        <div class="board">
+          ${responses.map(r => createCard(r.name, r.response)).join('')}
+        </div>
+        <div class="json-toggle">
+          <button onclick="toggleJson('${jsonId}', this)">Show JSON</button>
+        </div>
+        <div class="json-raw" id="${jsonId}">
+          <pre>${JSON.stringify(data, null, 2)}</pre>
+        </div>
+      </div>
+    `;
+  }
+
+  function toggleJson(jsonId, btn) {
+    const jsonEl = document.getElementById(jsonId);
+    if (jsonEl.classList.contains('visible')) {
+      jsonEl.classList.remove('visible');
+      btn.textContent = 'Show JSON';
+    } else {
+      jsonEl.classList.add('visible');
+      btn.textContent = 'Hide JSON';
+    }
+  }
+
+  function addSnapshot(data) {
+    snapshotHistory.unshift(data); // 新しいのを先頭に
+    const index = snapshotHistory.length;
+
+    const container = document.getElementById('historyContainer');
+    const html = createSnapshotHTML(data, index);
+
+    // 先頭に挿入
+    container.insertAdjacentHTML('afterbegin', html);
+
+    // カウント更新
+    document.getElementById('exportCount').textContent = `${snapshotHistory.length} snapshot${snapshotHistory.length > 1 ? 's' : ''}`;
+
+    // アニメーション後にクラス削除
+    setTimeout(() => {
+      const el = document.getElementById(`snapshot-${index}`);
+      if (el) el.classList.remove('new-snapshot');
+    }, 500);
+  }
+
+  // Receive data from main process
+  window.electronAPI.onExportData((data) => {
+    addSnapshot(data);
+  });
+</script>
+
+</body>
+</html>
