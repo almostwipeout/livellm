@@ -23,29 +23,6 @@
  */
 
 const http = require('http');
-const https = require('https');
-
-// =============================================================================
-// xAI Grok API Configuration
-// =============================================================================
-
-const XAI_API = {
-  baseUrl: 'api.x.ai',
-  apiKey: process.env.XAI_API_KEY || '',
-  model: 'grok-3',
-  timeout: 60000
-};
-
-// Grok API fallback configuration
-let grokFallbackCount = 0;
-const GROK_FALLBACK_MAX = 2; // 1セッションあたり最大2回
-const GROK_RETRY_DELAY_MS = 1000; // リトライ間のディレイ（1秒）
-let lastSentPrompt = null; // 最後に送信されたプロンプトを保存
-
-// ディレイ用ヘルパー関数
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 // =============================================================================
 // Configuration
@@ -59,8 +36,8 @@ const QUAD_API = {
 
 const SERVER_INFO = {
   name: 'quad-browser',
-  version: '1.6.0',
-  description: '赤兎馬ラウザー - Grok API fallback (2回リトライ) + refresh機能'
+  version: '1.7.0',
+  description: '赤兎馬ラウザー - ローカル完結版（APIキー不要）'
 };
 
 // =============================================================================
@@ -163,28 +140,6 @@ const TOOLS = [
       },
       required: []
     }
-  },
-  {
-    name: 'grok_api_call',
-    description: 'xAI Grok APIを直接呼び出してレスポンスを取得。ブラウザスクレイピングではなくAPI経由で高速・確実に回答を得られる。',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        prompt: {
-          type: 'string',
-          description: 'Grokに送信するプロンプト'
-        },
-        systemPrompt: {
-          type: 'string',
-          description: 'システムプロンプト（オプション）'
-        },
-        maxTokens: {
-          type: 'number',
-          description: '最大トークン数（デフォルト: 1000）'
-        }
-      },
-      required: ['prompt']
-    }
   }
 ];
 
@@ -239,71 +194,6 @@ function callQuadAPI(endpoint, data = {}) {
 }
 
 // =============================================================================
-// xAI Grok API Client
-// =============================================================================
-
-function callGrokAPI(prompt, systemPrompt = 'You are a helpful assistant.', maxTokens = 1000) {
-  return new Promise((resolve, reject) => {
-    const requestBody = JSON.stringify({
-      model: XAI_API.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt }
-      ],
-      max_tokens: maxTokens,
-      stream: false
-    });
-
-    const options = {
-      hostname: XAI_API.baseUrl,
-      port: 443,
-      path: '/v1/chat/completions',
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${XAI_API.apiKey}`,
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(requestBody)
-      },
-      timeout: XAI_API.timeout
-    };
-
-    const req = https.request(options, (res) => {
-      let body = '';
-      res.on('data', chunk => body += chunk);
-      res.on('end', () => {
-        try {
-          const data = JSON.parse(body);
-          if (data.error) {
-            reject(new Error(`xAI API Error: ${data.error.message}`));
-          } else {
-            resolve({
-              text: data.choices[0].message.content,
-              model: data.model,
-              usage: data.usage,
-              id: data.id
-            });
-          }
-        } catch (e) {
-          reject(new Error(`xAI API Response Parse Error: ${e.message}`));
-        }
-      });
-    });
-
-    req.on('error', (e) => {
-      reject(new Error(`xAI API Connection Error: ${e.message}`));
-    });
-
-    req.on('timeout', () => {
-      req.destroy();
-      reject(new Error(`xAI API Timeout (${XAI_API.timeout}ms)`));
-    });
-
-    req.write(requestBody);
-    req.end();
-  });
-}
-
-// =============================================================================
 // Tool Execution
 // =============================================================================
 
@@ -311,48 +201,12 @@ async function executeTool(name, args = {}) {
   try {
     switch (name) {
       case 'get_responses':
-        const responses = await callQuadAPI('/api/get-responses');
-
-        // Grokが空でfallback可能ならAPI経由で取得（最大2回、ディレイ付きリトライ）
-        if (responses.responses && lastSentPrompt && grokFallbackCount < GROK_FALLBACK_MAX) {
-          const grokIdx = responses.responses.findIndex(r => r.name === 'Grok');
-          if (grokIdx >= 0 && (!responses.responses[grokIdx].response || responses.responses[grokIdx].response === '')) {
-            let retryAttempt = 0;
-            let lastError = null;
-
-            while (retryAttempt < 2 && grokFallbackCount < GROK_FALLBACK_MAX) {
-              try {
-                if (retryAttempt > 0) {
-                  await sleep(GROK_RETRY_DELAY_MS);
-                }
-                grokFallbackCount++;
-                retryAttempt++;
-                const apiResult = await callGrokAPI(lastSentPrompt);
-                responses.responses[grokIdx].response = apiResult.text;
-                responses.responses[grokIdx].source = 'api-fallback';
-                responses.responses[grokIdx].fallbackCount = grokFallbackCount;
-                responses.responses[grokIdx].retryAttempt = retryAttempt;
-                lastError = null;
-                break; // 成功したらループ終了
-              } catch (e) {
-                lastError = e.message;
-              }
-            }
-
-            if (lastError) {
-              responses.responses[grokIdx].fallbackError = lastError;
-              responses.responses[grokIdx].retryAttempts = retryAttempt;
-            }
-          }
-        }
-
-        return responses;
+        return await callQuadAPI('/api/get-responses');
 
       case 'send_prompt':
         if (!args.prompt) {
           return { error: 'prompt は必須パラメータです' };
         }
-        lastSentPrompt = args.prompt; // プロンプトを保存
         return await callQuadAPI('/api/send-prompt', { prompt: args.prompt });
 
       case 'export_json':
@@ -378,16 +232,6 @@ async function executeTool(name, args = {}) {
 
       case 'refresh_pane':
         return await callQuadAPI('/api/refresh-pane', { pane: args.pane || null });
-
-      case 'grok_api_call':
-        if (!args.prompt) {
-          return { error: 'prompt は必須パラメータです' };
-        }
-        return await callGrokAPI(
-          args.prompt,
-          args.systemPrompt || 'You are a helpful assistant.',
-          args.maxTokens || 1000
-        );
 
       default:
         return { error: `Unknown tool: ${name}` };
@@ -496,8 +340,7 @@ process.stderr.write(`
 ║  Quad Browser を Claude から操縦するための MCP サーバー   ║
 ╠══════════════════════════════════════════════════════════╣
 ║  Quad Browser API: http://${QUAD_API.host}:${QUAD_API.port}              ║
-║  xAI Grok API: Enabled ✓                                 ║
 ║  Tools: get_responses, send_prompt, export_json,         ║
-║         navigate, get_status, execute_send, grok_api_call║
+║         navigate, get_status, execute_send, refresh_pane ║
 ╚══════════════════════════════════════════════════════════╝
 `);
