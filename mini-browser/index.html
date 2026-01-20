@@ -23,21 +23,21 @@
     }
 
     header {
-      height: 44px;
+      height: 28px;
       background: rgba(0,20,40,0.95);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid #0ff3;
       display: flex;
       align-items: center;
-      padding: 0 16px;
-      gap: 16px;
+      padding: 0 10px;
+      gap: 10px;
     }
 
     .header-title {
-      font-size: 1.1rem;
+      font-size: 0.75rem;
       font-weight: 700;
-      letter-spacing: 2px;
-      text-shadow: 0 0 10px #0ff8;
+      letter-spacing: 1px;
+      text-shadow: 0 0 8px #0ff8;
     }
 
     .layout-toggle {
@@ -50,11 +50,11 @@
       background: #001122;
       border: 1px solid #0ff4;
       color: #0ff;
-      padding: 6px 12px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 3px;
       cursor: pointer;
       font-family: 'Roboto Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
     }
 
     .layout-btn.active,
@@ -65,11 +65,11 @@
     }
 
     .export-btn {
-      padding: 8px 18px;
+      padding: 3px 10px;
       background: linear-gradient(90deg, #00ff88, #00d4ff);
       border: none;
       color: #001;
-      font-size: 13px;
+      font-size: 0.65rem;
       font-weight: bold;
       cursor: pointer;
       letter-spacing: 1px;
@@ -78,18 +78,18 @@
 
     .export-btn:hover {
       transform: scale(1.05);
-      box-shadow: 0 0 20px rgba(0,255,136,0.5);
+      box-shadow: 0 0 15px rgba(0,255,136,0.5);
     }
 
     .settings-btn {
       background: #001122;
       border: 1px solid #0ff4;
       color: #0ff;
-      padding: 6px 12px;
-      border-radius: 4px;
+      padding: 2px 8px;
+      border-radius: 3px;
       cursor: pointer;
       font-family: 'Roboto Mono', monospace;
-      font-size: 0.75rem;
+      font-size: 0.65rem;
     }
 
     .settings-btn:hover {
@@ -101,7 +101,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       grid-template-rows: 1fr 1fr;
-      height: calc(100vh - 44px);
+      height: calc(100vh - 28px);
       gap: 2px;
       padding: 2px;
       background: #000;
@@ -162,6 +162,35 @@
       font-family: 'Roboto Mono', monospace;
     }
 
+    .quad-memo {
+      height: 50px;
+      background: rgba(0, 15, 30, 0.95);
+      border-top: 1px solid #0ff3;
+      padding: 4px;
+    }
+
+    .quad-memo textarea {
+      width: 100%;
+      height: 100%;
+      background: #001020;
+      border: 1px solid #0ff2;
+      color: #8cf;
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.7rem;
+      padding: 4px 6px;
+      resize: none;
+      outline: none;
+    }
+
+    .quad-memo textarea:focus {
+      border-color: #0ff6;
+      box-shadow: 0 0 8px rgba(0, 255, 255, 0.2);
+    }
+
+    .quad-memo textarea::placeholder {
+      color: #0ff4;
+    }
+
   </style>
 </head>
 
@@ -187,6 +216,9 @@
     <div class="quad-content">
       <webview id="webview-1" src="https://chatgpt.com"></webview>
     </div>
+    <div class="quad-memo">
+      <textarea id="memo-1" placeholder="GPT memo..."></textarea>
+    </div>
     <span class="quad-number">#1 GPT</span>
   </div>
 
@@ -197,6 +229,9 @@
     </div>
     <div class="quad-content">
       <webview id="webview-2" src="https://gemini.google.com"></webview>
+    </div>
+    <div class="quad-memo">
+      <textarea id="memo-2" placeholder="Gemini memo..."></textarea>
     </div>
     <span class="quad-number">#2 Gemini</span>
   </div>
@@ -209,6 +244,9 @@
     <div class="quad-content">
       <webview id="webview-3" src="https://claude.ai"></webview>
     </div>
+    <div class="quad-memo">
+      <textarea id="memo-3" placeholder="Claude memo..."></textarea>
+    </div>
     <span class="quad-number">#3 Claude</span>
   </div>
 
@@ -219,6 +257,9 @@
     </div>
     <div class="quad-content">
       <webview id="webview-4" src="https://grok.com"></webview>
+    </div>
+    <div class="quad-memo">
+      <textarea id="memo-4" placeholder="Grok memo..."></textarea>
     </div>
     <span class="quad-number">#4 Grok</span>
   </div>
@@ -611,14 +652,6 @@ document.querySelectorAll('.quad-go').forEach(btn => {
 [1, 2, 3, 4].forEach(pane => {
   const webview = getWebview(pane);
   if (webview) {
-    webview.addEventListener('dom-ready', () => {
-      // 右クリックでDevTools
-      webview.addEventListener('context-menu', (e) => {
-        e.preventDefault();
-        webview.openDevTools();
-      });
-    });
-    
     // URL追跡: ナビゲーション時にURL欄を更新
     webview.addEventListener('did-navigate', (e) => {
       const urlInput = document.getElementById(`url-${pane}`);
@@ -626,7 +659,7 @@ document.querySelectorAll('.quad-go').forEach(btn => {
         urlInput.value = e.url;
       }
     });
-    
+
     // URL追跡: SPA内ナビゲーション（ハッシュ変更など）
     webview.addEventListener('did-navigate-in-page', (e) => {
       const urlInput = document.getElementById(`url-${pane}`);
@@ -722,6 +755,55 @@ window.electronAPI.onZoomCommand((command) => {
     zoomAllReset();
   }
 });
+
+// =============================================================================
+// Memo Persistence (localStorage)
+// =============================================================================
+
+const MEMO_STORAGE_KEY = 'quad-browser-memos';
+
+function loadMemos() {
+  try {
+    const saved = localStorage.getItem(MEMO_STORAGE_KEY);
+    if (saved) {
+      const memos = JSON.parse(saved);
+      [1, 2, 3, 4].forEach(pane => {
+        const textarea = document.getElementById(`memo-${pane}`);
+        if (textarea && memos[pane]) {
+          textarea.value = memos[pane];
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Failed to load memos:', e);
+  }
+}
+
+function saveMemos() {
+  try {
+    const memos = {};
+    [1, 2, 3, 4].forEach(pane => {
+      const textarea = document.getElementById(`memo-${pane}`);
+      if (textarea) {
+        memos[pane] = textarea.value;
+      }
+    });
+    localStorage.setItem(MEMO_STORAGE_KEY, JSON.stringify(memos));
+  } catch (e) {
+    console.error('Failed to save memos:', e);
+  }
+}
+
+// メモ入力時に自動保存
+[1, 2, 3, 4].forEach(pane => {
+  const textarea = document.getElementById(`memo-${pane}`);
+  if (textarea) {
+    textarea.addEventListener('input', saveMemos);
+  }
+});
+
+// 起動時にメモを読み込み
+loadMemos();
 </script>
 
 </body>
