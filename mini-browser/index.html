@@ -804,6 +804,68 @@ function saveMemos() {
 
 // 起動時にメモを読み込み
 loadMemos();
+
+// =============================================================================
+// Session Restore (URL Persistence)
+// =============================================================================
+
+const URL_STORAGE_KEY = 'quad-browser-urls';
+const DEFAULT_URLS = {
+  1: 'https://chatgpt.com',
+  2: 'https://gemini.google.com',
+  3: 'https://claude.ai',
+  4: 'https://grok.com'
+};
+
+function saveUrls() {
+  try {
+    const urls = {};
+    [1, 2, 3, 4].forEach(pane => {
+      const webview = getWebview(pane);
+      if (webview) {
+        const url = webview.getURL ? webview.getURL() : webview.src;
+        if (url && url !== 'about:blank') {
+          urls[pane] = url;
+        }
+      }
+    });
+    localStorage.setItem(URL_STORAGE_KEY, JSON.stringify(urls));
+  } catch (e) {
+    console.error('Failed to save URLs:', e);
+  }
+}
+
+function loadUrls() {
+  try {
+    const saved = localStorage.getItem(URL_STORAGE_KEY);
+    if (saved) {
+      const urls = JSON.parse(saved);
+      [1, 2, 3, 4].forEach(pane => {
+        const webview = getWebview(pane);
+        const urlInput = document.getElementById(`url-${pane}`);
+        const url = urls[pane] || DEFAULT_URLS[pane];
+        if (webview && url) {
+          webview.src = url;
+          if (urlInput) urlInput.value = url;
+        }
+      });
+      console.log('Session restored:', urls);
+    }
+  } catch (e) {
+    console.error('Failed to load URLs:', e);
+  }
+}
+
+// URL変更時に自動保存（did-navigateイベントで）
+[1, 2, 3, 4].forEach(pane => {
+  const webview = getWebview(pane);
+  if (webview) {
+    webview.addEventListener('did-finish-load', saveUrls);
+  }
+});
+
+// 起動時にURLを復元
+loadUrls();
 </script>
 
 </body>
