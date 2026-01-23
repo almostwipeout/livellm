@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Background Animation - LIVELLM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            background: #000000;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .crest-layer {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.985);
+            width: 50%;
+            height: 50%;
+            background-image: url('./crest.png/far_back_crest_with_strong_light.png');
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: 0;
+            animation:
+                core-manifestation 97s infinite cubic-bezier(0.4, 0.0, 0.2, 1),
+                phase-drift 120s infinite ease-in-out,
+                focus-breath 90s infinite ease-in-out,
+                hesitant-glow 110s infinite ease-in-out;
+            will-change: opacity, filter, transform;
+            z-index: 1;
+        }
+
+        /* ─────── 不在 → 兆候 → 呼吸 → 視線が合う → 逃げる → 沈む → 痕跡 → 沈黙 ─────── */
+        @keyframes core-manifestation {
+            0% {
+                opacity: 0;
+                filter: blur(8px) brightness(0.8);
+                transform: translate(-50%, -50%) scale(0.985);
+            }
+            32% {
+                opacity: 0.15;
+                filter: blur(5px) brightness(0.9);
+                transform: translate(-50%, -50%) scale(0.99);
+            }
+            41% {
+                opacity: 0.45;
+                filter: blur(3px) brightness(1.0);
+                transform: translate(-50%, -50%) scale(1.0);
+            }
+            47% {
+                opacity: 0.85;
+                filter: blur(0px) brightness(1.2);
+                transform: translate(-50%, -50%) scale(1.008);
+            }
+            52% {
+                opacity: 0.6;
+                filter: blur(2px) brightness(1.05);
+                transform: translate(-50%, -50%) scale(1.002);
+            }
+            58% {
+                opacity: 0.25;
+                filter: blur(4px) brightness(0.9);
+                transform: translate(-50%, -50%) scale(0.99);
+            }
+            66% {
+                opacity: 0.08;
+                filter: blur(6px) brightness(0.85);
+                transform: translate(-50%, -50%) scale(0.985);
+            }
+            100% {
+                opacity: 0;
+                filter: blur(8px) brightness(0.8);
+                transform: translate(-50%, -50%) scale(0.985);
+            }
+        }
+
+        /* ───────── 位相の歪み ───────── */
+        @keyframes phase-drift {
+            0%   { transform: translate(-50%, -50%) scale(1); }
+            50%  { transform: translate(-50%, -50%) scale(1.008); }
+            100% { transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* ───────── 焦点の呼吸 ───────── */
+        @keyframes focus-breath {
+            0%   { filter: blur(6px); }
+            40%  { filter: blur(3px); }
+            60%  { filter: blur(4px); }
+            100% { filter: blur(6px); }
+        }
+
+        /* ───────── 光のためらい ───────── */
+        @keyframes hesitant-glow {
+            0%   { filter: brightness(0.9); }
+            45%  { filter: brightness(1.0); }
+            50%  { filter: brightness(1.05); }
+            55%  { filter: brightness(0.95); }
+            100% { filter: brightness(0.9); }
+        }
+    </style>
+</head>
+<body>
+    <div class="crest-layer"></div>
+</body>
+</html>
